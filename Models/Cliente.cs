@@ -25,7 +25,7 @@ public partial class Cliente
 
     public string? Pais { get; set; }
 
-    public virtual Utilizador IdUtilizadorNavigation { get; set; } = null!;
+    public virtual Utilizador? IdUtilizadorNavigation { get; set; }
 
     public virtual ICollection<PropostaTrabalho> PropostaTrabalhos { get; set; } = new List<PropostaTrabalho>();
 }
