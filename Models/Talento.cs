@@ -17,6 +17,8 @@ public partial class Talento
 
     public string? Telefone { get; set; }
 
+    public string Pais { get; set; } = null!;
+
     public double? PrecoHora { get; set; }
 
     public string? Categoria { get; set; }
