@@ -33,6 +33,11 @@
             </div>
 
             <div class="mb-3">
+                <label for="horasTotais" class="form-label">Horas Totais</label>
+                <input type="number" name="horasTotais" id="horasTotais" class="form-control"/>
+            </div>
+
+            <div class="mb-3">
                 <input type="submit" value="Atribuir" class="btn btn-primary" />
                 <a asp-action="Details" asp-route-id="@talento?.IdTalento" class="btn btn-secondary">Cancelar</a>
             </div>

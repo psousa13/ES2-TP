@@ -59,7 +59,6 @@ namespace TalentosIT.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("IdUtilizador,PrimeiroNome,Apelido,Email,Telefone,PrecoHora,Categoria,Publico,Pais")] Talento talento)
         {
-            // Preencher nome/apelido/email a partir do utilizador selecionado
             String? idUtilizador = User.FindFirst("IdUtilizador")?.Value;
             if (idUtilizador == null)
             {
@@ -72,13 +71,13 @@ namespace TalentosIT.Web.Controllers
             {
                 talento.PrimeiroNome = utilizador.PrimeiroNome;
                 talento.Apelido = utilizador.Apelido;
-                talento.Email = $"talento_{talento.IdUtilizador}_{Guid.NewGuid():N}@placeholder.com";
+                talento.Email = utilizador.Email; // FIX: use the real login email
             }
             else
             {
                 talento.PrimeiroNome = "-";
                 talento.Apelido = "-";
-                talento.Email = $"talento_{Guid.NewGuid():N}@placeholder.com";
+                talento.Email = "-";
             }
 
             if (string.IsNullOrWhiteSpace(talento.Pais)) talento.Pais = "-";
@@ -130,7 +129,11 @@ namespace TalentosIT.Web.Controllers
 
             if (string.IsNullOrWhiteSpace(talento.PrimeiroNome)) talento.PrimeiroNome = "-";
             if (string.IsNullOrWhiteSpace(talento.Apelido)) talento.Apelido = "-";
-            if (string.IsNullOrWhiteSpace(talento.Email)) talento.Email = $"talento_{Guid.NewGuid():N}@placeholder.com";
+
+            // FIX: always sync email from the utilizador instead of generating a placeholder
+            var utilizador = await _context.Utilizadors.FindAsync(talento.IdUtilizador);
+            talento.Email = utilizador?.Email ?? talento.Email;
+
             if (string.IsNullOrWhiteSpace(talento.Pais)) talento.Pais = "-";
             if (string.IsNullOrWhiteSpace(talento.Categoria)) talento.Categoria = "Outro";
             talento.PrecoHora ??= 0;
@@ -233,7 +236,7 @@ namespace TalentosIT.Web.Controllers
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AtribuirCliente(int id, int idCliente, string titulo)
+        public async Task<IActionResult> AtribuirCliente(int id, int idCliente, string titulo, int horasTotais)
         {
             var talento = await _context.Talentos.FindAsync(id);
             var cliente = await _context.Clientes.FindAsync(idCliente);
@@ -258,6 +261,7 @@ namespace TalentosIT.Web.Controllers
                 IdCliente = idCliente,
                 Titulo = string.IsNullOrWhiteSpace(titulo) ? $"Proposta - {talento.PrimeiroNome} {talento.Apelido}" : titulo,
                 Categoria = talento.Categoria ?? "Geral",
+                HorasTotais = horasTotais,
                 Descricao = $"Talento {talento.PrimeiroNome} {talento.Apelido} apresentado ao cliente."
             };
 
@@ -274,7 +278,6 @@ namespace TalentosIT.Web.Controllers
 
         private async Task CarregarViewData(int? idUtilizadorSelecionado = null)
         {
-            // Utilizadores — mostra nome + email no dropdown
             var utilizadores = await _context.Utilizadors
                 .Select(u => new {
                     u.IdUtilizador,
@@ -284,7 +287,6 @@ namespace TalentosIT.Web.Controllers
 
             ViewData["IdUtilizador"] = new SelectList(utilizadores, "IdUtilizador", "NomeEmail", idUtilizadorSelecionado);
 
-            // Categorias: base fixas + as que já existem na BD
             var categoriasDB = await _context.Talentos
                 .Where(t => t.Categoria != null)
                 .Select(t => t.Categoria!)
