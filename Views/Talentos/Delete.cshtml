@@ -1,0 +1,45 @@
+@model TalentosIT.Web.Models.Talento
+
+@{
+    ViewData["Title"] = "Eliminar Talento";
+}
+
+<h1>Eliminar Talento</h1>
+
+<h3>Tem a certeza que quer eliminar este talento?</h3>
+<div>
+    <dl class="row">
+        <dt class="col-sm-3">Nome</dt>
+        <dd class="col-sm-9">@Model.PrimeiroNome @Model.Apelido</dd>
+
+        <dt class="col-sm-3">Email</dt>
+        <dd class="col-sm-9">@Model.Email</dd>
+
+        <dt class="col-sm-3">Categoria</dt>
+        <dd class="col-sm-9">@(Model.Categoria ?? "-")</dd>
+
+        <dt class="col-sm-3">Preço/Hora</dt>
+        <dd class="col-sm-9">@(Model.PrecoHora.HasValue ? Model.PrecoHora.Value.ToString("F2") + " €" : "-")</dd>
+
+        <dt class="col-sm-3">Visibilidade</dt>
+        <dd class="col-sm-9">
+            @if (Model.Publico == true)
+            {
+                <span class="badge bg-success">Público</span>
+            }
+            else
+            {
+                <span class="badge bg-secondary">Privado</span>
+            }
+        </dd>
+
+        <dt class="col-sm-3">Utilizador</dt>
+        <dd class="col-sm-9">@Model.IdUtilizadorNavigation?.Email</dd>
+    </dl>
+
+    <form asp-action="Delete">
+        <input type="hidden" asp-for="IdTalento" />
+        <input type="submit" value="Eliminar" class="btn btn-danger" /> |
+        <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>

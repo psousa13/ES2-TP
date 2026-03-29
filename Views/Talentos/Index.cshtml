@@ -1,0 +1,51 @@
+@model IEnumerable<TalentosIT.Web.Models.Talento>
+
+@{
+    ViewData["Title"] = "Talentos";
+}
+
+<h1>Talentos</h1>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Criar Novo Talento</a>
+</p>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Nome</th>
+            <th>Email</th>
+            <th>Categoria</th>
+            <th>Preço/Hora</th>
+            <th>Visibilidade</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.IdUtilizadorNavigation?.PrimeiroNome @item.IdUtilizadorNavigation?.Apelido</td>
+                <td>@item.IdUtilizadorNavigation?.Email</td>
+                <td>@(item.Categoria ?? "-")</td>
+                <td>@(item.PrecoHora.HasValue ? item.PrecoHora.Value.ToString("F2") + " €/h" : "-")</td>
+                <td>
+                    @if (item.Publico == true)
+                    {
+                        <span class="badge bg-success">Público</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">Privado</span>
+                    }
+                </td>
+                <td style="white-space: nowrap;">
+                    <a asp-action="Details" asp-route-id="@item.IdTalento" class="btn btn-sm btn-info">Detalhes</a>
+                    <a asp-action="Edit" asp-route-id="@item.IdTalento" class="btn btn-sm btn-warning">Editar</a>
+                    <a asp-action="AtribuirCliente" asp-route-id="@item.IdTalento" class="btn btn-sm btn-secondary">Atribuir</a>
+                    <a asp-action="Delete" asp-route-id="@item.IdTalento" class="btn btn-sm btn-danger">Eliminar</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

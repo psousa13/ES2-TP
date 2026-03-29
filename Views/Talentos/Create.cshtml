@@ -1,0 +1,97 @@
+@model TalentosIT.Web.Models.Talento
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+@{
+    ViewData["Title"] = "Criar Talento";
+    var categorias = ViewData["Categorias"] as List<SelectListItem> ?? new List<SelectListItem>();
+    var utilizadores = ViewData["IdUtilizador"] as SelectList;
+}
+
+<h1>Criar Talento</h1>
+<hr />
+
+<div class="row">
+    <div class="col-md-5">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="mb-3">
+                <label asp-for="IdUtilizador" class="form-label">Utilizador <span class="text-danger">*</span></label>
+                <select asp-for="IdUtilizador" class="form-select" asp-items="ViewBag.IdUtilizador"
+                        id="selectUtilizador" onchange="preencherNome(this)">
+                    <option value="">-- Selecionar --</option>
+                </select>
+                <span asp-validation-for="IdUtilizador" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Nome (preenchido automaticamente)</label>
+                <input type="text" id="nomeDisplay" class="form-control" readonly
+                       placeholder="Selecione um utilizador..." style="background-color: #f8f9fa;" />
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Categoria" class="form-label">Categoria</label>
+                <select asp-for="Categoria" class="form-select">
+                    <option value="">-- Selecionar --</option>
+                    @foreach (var cat in categorias)
+                    {
+                        <option value="@cat.Value">@cat.Text</option>
+                    }
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="PrecoHora" class="form-label">Preço por Hora (€)</label>
+                <input asp-for="PrecoHora" class="form-control" type="number" step="0.01" min="0" />
+            </div>
+
+            <div class="mb-3 form-check">
+                <input type="checkbox" name="Publico" id="Publico" class="form-check-input" value="true" />
+                <label for="Publico" class="form-check-label">Perfil Público</label>
+                <div class="form-text text-muted">Se marcado, o perfil será visível para todos os utilizadores.</div>
+            </div>
+
+            <div class="mb-3">
+                <input type="submit" value="Criar" class="btn btn-primary" />
+                <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tom-select/2.3.1/css/tom-select.bootstrap5.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tom-select/2.3.1/js/tom-select.complete.min.js"></script>
+    <script>
+        // Guardar dados dos utilizadores para preencher o nome
+        const utilizadores = {
+            @if (utilizadores != null)
+            {
+                foreach (var u in utilizadores)
+                {
+                    if (u.Value != "")
+                    {
+                        // O texto tem formato "PrimeiroNome Apelido (email)"
+                        // Extraímos o nome (tudo antes do "(" )
+                        @:@u.Value: "@u.Text.Split('(')[0].Trim()",
+                    }
+                }
+            }
+        };
+
+        function preencherNome(select) {
+            const id = select.value;
+            document.getElementById('nomeDisplay').value = utilizadores[id] || '';
+        }
+
+        new TomSelect('#selectUtilizador', {
+            placeholder: 'Pesquisar por email...',
+            allowEmptyOption: true,
+            onChange: function(value) {
+                document.getElementById('nomeDisplay').value = utilizadores[value] || '';
+            }
+        });
+    </script>
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

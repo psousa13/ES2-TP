@@ -1,0 +1,41 @@
+@{
+    ViewData["Title"] = "Atribuir Talento a Cliente";
+    var talento = ViewData["Talento"] as TalentosIT.Web.Models.Talento;
+}
+
+<h1>Atribuir Talento a Cliente</h1>
+
+<p class="text-muted">
+    Está a apresentar o talento <strong>@talento?.PrimeiroNome @talento?.Apelido</strong> a um cliente.
+    Isto irá criar uma proposta de trabalho associando este talento ao cliente selecionado.
+</p>
+
+<hr />
+
+<div class="row">
+    <div class="col-md-5">
+        <form asp-action="AtribuirCliente" asp-route-id="@talento?.IdTalento" method="post">
+            @Html.AntiForgeryToken()
+
+            <div class="mb-3">
+                <label for="idCliente" class="form-label">Cliente</label>
+                <select name="idCliente" id="idCliente" class="form-select" asp-items="ViewBag.IdCliente">
+                    <option value="">-- Selecionar Cliente --</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label for="titulo" class="form-label">Título da Proposta</label>
+                <input type="text" name="titulo" id="titulo" class="form-control"
+                       placeholder="Ex: Desenvolvimento Web Frontend"
+                       value="Proposta - @talento?.PrimeiroNome @talento?.Apelido" />
+                <div class="form-text text-muted">Nome da proposta que será criada para este cliente.</div>
+            </div>
+
+            <div class="mb-3">
+                <input type="submit" value="Atribuir" class="btn btn-primary" />
+                <a asp-action="Details" asp-route-id="@talento?.IdTalento" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>

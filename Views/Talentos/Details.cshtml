@@ -1,0 +1,110 @@
+@model TalentosIT.Web.Models.Talento
+
+@{
+    ViewData["Title"] = "Detalhes do Talento";
+}
+
+<h1>Detalhes do Talento</h1>
+
+@if (TempData["Sucesso"] != null)
+{
+    <div class="alert alert-success">@TempData["Sucesso"]</div>
+}
+@if (TempData["Aviso"] != null)
+{
+    <div class="alert alert-warning">@TempData["Aviso"]</div>
+}
+
+<div class="row">
+    <div class="col-md-6">
+        <dl class="row">
+            <dt class="col-sm-4">Nome</dt>
+            <dd class="col-sm-8">@Model.PrimeiroNome @Model.Apelido</dd>
+
+            <dt class="col-sm-4">Email</dt>
+            <dd class="col-sm-8">@Model.Email</dd>
+
+            <dt class="col-sm-4">Telefone</dt>
+            <dd class="col-sm-8">@(Model.Telefone ?? "-")</dd>
+
+            <dt class="col-sm-4">Preço/Hora</dt>
+            <dd class="col-sm-8">@(Model.PrecoHora.HasValue ? Model.PrecoHora.Value.ToString("F2") + " €" : "-")</dd>
+
+            <dt class="col-sm-4">Categoria</dt>
+            <dd class="col-sm-8">@(Model.Categoria ?? "-")</dd>
+
+            <dt class="col-sm-4">Visibilidade</dt>
+            <dd class="col-sm-8">
+                @if (Model.Publico == true)
+                {
+                    <span class="badge bg-success">Público</span>
+                }
+                else
+                {
+                    <span class="badge bg-secondary">Privado</span>
+                }
+            </dd>
+
+            <dt class="col-sm-4">Utilizador</dt>
+            <dd class="col-sm-8">@Model.IdUtilizadorNavigation?.PrimeiroNome @Model.IdUtilizadorNavigation?.Apelido</dd>
+        </dl>
+    </div>
+</div>
+
+@* Skills do Talento *@
+@if (Model.TalentoSkills.Any())
+{
+    <h4 class="mt-4">Skills</h4>
+    <table class="table table-sm w-50">
+        <thead>
+            <tr>
+                <th>Skill</th>
+                <th>Área Profissional</th>
+                <th>Anos de Experiência</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var ts in Model.TalentoSkills)
+            {
+                <tr>
+                    <td>@ts.IdSkillNavigation?.Nome</td>
+                    <td>@ts.IdSkillNavigation?.AreaProfissional</td>
+                    <td>@ts.AnosExperiencia</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@* Experiências do Talento *@
+@if (Model.Experiencia.Any())
+{
+    <h4 class="mt-4">Experiência Profissional</h4>
+    <table class="table table-sm w-75">
+        <thead>
+            <tr>
+                <th>Título</th>
+                <th>Empresa</th>
+                <th>Início</th>
+                <th>Fim</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var exp in Model.Experiencia.OrderByDescending(e => e.AnoInicio))
+            {
+                <tr>
+                    <td>@exp.Titulo</td>
+                    <td>@exp.Empresa</td>
+                    <td>@exp.AnoInicio</td>
+                    <td>@(exp.AnoFim.HasValue ? exp.AnoFim.Value.ToString() : "Presente")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<div class="mt-3">
+    <a asp-action="Edit" asp-route-id="@Model.IdTalento" class="btn btn-warning">Editar</a>
+    <a asp-action="AtribuirCliente" asp-route-id="@Model.IdTalento" class="btn btn-info">Atribuir a Cliente</a>
+    <a asp-action="Index" class="btn btn-secondary">Voltar à Lista</a>
+</div>
