@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -34,6 +34,27 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                         </li>
+                    </ul>
+                </div>
+
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        @if (User?.Identity?.IsAuthenticated == true) 
+                        {
+                            <li class="nav-item">
+                                <form asp-controller="Conta" asp-action="Logout" method="post">
+                                    <button type="submit" class="btn text-dark">Logout</button>
+                                </form>
+                            </li>
+                        } else
+                        {
+                            <li>
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Conta" asp-action="Login">Login</a>
+                            </li>
+                            <li>
+                                <a class="nav-link text-dark" asp-area="" asp-controller="SignUp" asp-action="Index">Criar Conta</a>
+                            </li>
+                        }
                     </ul>
                 </div>
             </div>
