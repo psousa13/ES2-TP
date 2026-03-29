@@ -78,7 +78,7 @@ public class ContaController : Controller
 
         if (resultado == PasswordVerificationResult.Failed)
         {
-            ModelState.AddModelError("", "Login inválido.");
+            ModelState.AddModelError("PalavraPasse", "Palavra passe incorreta.");
             return View(model);
         }
 

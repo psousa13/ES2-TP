@@ -32,6 +32,9 @@
                             <a class="nav-link text-dark" asp-area="" asp-controller="Utilizadores" asp-action="Index">Gestão de Utilizadores</a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Clientes" asp-action="Index">Clientes</a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                         </li>
                     </ul>
@@ -45,6 +48,9 @@
                                 <form asp-controller="Conta" asp-action="Logout" method="post">
                                     <button type="submit" class="btn text-dark">Logout</button>
                                 </form>
+                            </li>
+                            <li>
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Perfil" asp-action="Edit">Perfil</a>
                             </li>
                         } else
                         {
