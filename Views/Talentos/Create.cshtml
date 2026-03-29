@@ -16,21 +16,6 @@
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
             <div class="mb-3">
-                <label asp-for="IdUtilizador" class="form-label">Utilizador <span class="text-danger">*</span></label>
-                <select asp-for="IdUtilizador" class="form-select" asp-items="ViewBag.IdUtilizador"
-                        id="selectUtilizador" onchange="preencherNome(this)">
-                    <option value="">-- Selecionar --</option>
-                </select>
-                <span asp-validation-for="IdUtilizador" class="text-danger"></span>
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label">Nome (preenchido automaticamente)</label>
-                <input type="text" id="nomeDisplay" class="form-control" readonly
-                       placeholder="Selecione um utilizador..." style="background-color: #f8f9fa;" />
-            </div>
-
-            <div class="mb-3">
                 <label asp-for="Categoria" class="form-label">Categoria</label>
                 <select asp-for="Categoria" class="form-select">
                     <option value="">-- Selecionar --</option>

@@ -16,25 +16,6 @@
             <input type="hidden" asp-for="IdTalento" />
 
             <div class="mb-3">
-                <label asp-for="IdUtilizador" class="form-label">Utilizador <span class="text-danger">*</span></label>
-                <select asp-for="IdUtilizador" class="form-select" asp-items="ViewBag.IdUtilizador" id="selectUtilizador">
-                    <option value="">-- Selecionar --</option>
-                </select>
-                <span asp-validation-for="IdUtilizador" class="text-danger"></span>
-            </div>
-
-            <div class="mb-3">
-                <label asp-for="Categoria" class="form-label">Categoria</label>
-                <select asp-for="Categoria" class="form-select">
-                    <option value="">-- Selecionar --</option>
-                    @foreach (var cat in categorias)
-                    {
-                        <option value="@cat.Value">@cat.Text</option>
-                    }
-                </select>
-            </div>
-
-            <div class="mb-3">
                 <label asp-for="PrecoHora" class="form-label">Preço por Hora (€)</label>
                 <input asp-for="PrecoHora" class="form-control" type="number" step="0.01" min="0" />
             </div>

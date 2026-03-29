@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using TalentosIT.Web.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace TalentosIT.Web.Controllers
 {
@@ -19,6 +16,7 @@ namespace TalentosIT.Web.Controllers
         }
 
         // GET: Talentos
+        [Authorize]
         public async Task<IActionResult> Index()
         {
             var talentos = await _context.Talentos
@@ -28,6 +26,7 @@ namespace TalentosIT.Web.Controllers
         }
 
         // GET: Talentos/Details/5
+        [Authorize]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -47,6 +46,7 @@ namespace TalentosIT.Web.Controllers
         }
 
         // GET: Talentos/Create
+        [Authorize]
         public async Task<IActionResult> Create()
         {
             await CarregarViewData();
@@ -54,11 +54,19 @@ namespace TalentosIT.Web.Controllers
         }
 
         // POST: Talentos/Create
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("IdUtilizador,PrimeiroNome,Apelido,Email,Telefone,PrecoHora,Categoria,Publico,Pais")] Talento talento)
         {
             // Preencher nome/apelido/email a partir do utilizador selecionado
+            String? idUtilizador = User.FindFirst("IdUtilizador")?.Value;
+            if (idUtilizador == null)
+            {
+                return Unauthorized();
+            }
+            talento.IdUtilizador = int.Parse(idUtilizador);
+
             var utilizador = await _context.Utilizadors.FindAsync(talento.IdUtilizador);
             if (utilizador != null)
             {
@@ -97,6 +105,7 @@ namespace TalentosIT.Web.Controllers
         }
 
         // GET: Talentos/Edit/5
+        [Authorize]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -111,6 +120,7 @@ namespace TalentosIT.Web.Controllers
         }
 
         // POST: Talentos/Edit/5
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("IdTalento,IdUtilizador,PrimeiroNome,Apelido,Email,Telefone,PrecoHora,Categoria,Publico")] Talento talento)
@@ -154,6 +164,7 @@ namespace TalentosIT.Web.Controllers
         }
 
         // GET: Talentos/Delete/5
+        [Authorize]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -170,6 +181,7 @@ namespace TalentosIT.Web.Controllers
         }
 
         // POST: Talentos/Delete/5
+        [Authorize]
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
@@ -187,6 +199,7 @@ namespace TalentosIT.Web.Controllers
         // ---------------------------------------------------------------
 
         // GET: Talentos/AtribuirCliente/5
+        [Authorize]
         public async Task<IActionResult> AtribuirCliente(int? id)
         {
             if (id == null)
@@ -217,6 +230,7 @@ namespace TalentosIT.Web.Controllers
         }
 
         // POST: Talentos/AtribuirCliente/5
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AtribuirCliente(int id, int idCliente, string titulo)
