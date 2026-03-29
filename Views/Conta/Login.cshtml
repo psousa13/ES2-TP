@@ -1,0 +1,27 @@
+@model TalentosIT.Web.Models.LoginViewModel
+
+@{
+    ViewData["Title"] = "Login";
+}
+
+<h1>Login</h1>
+
+<form asp-action="Login" method="post">
+    <div class="form-group">
+        <label asp-for="Email" class="control-label"></label>
+        <input asp-for="Email" class="form-control"/>
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="PalavraPasse" class="control-label">Palavra Passe</label>
+        <input asp-for="PalavraPasse" type="password" class="form-control"/>
+        <span asp-validation-for="PalavraPasse" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <input type="submit" value="Entrar" class="btn btn-primary" />
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}   
