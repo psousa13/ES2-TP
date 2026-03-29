@@ -233,7 +233,7 @@ namespace TalentosIT.Web.Controllers
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AtribuirCliente(int id, int idCliente, string titulo)
+        public async Task<IActionResult> AtribuirCliente(int id, int idCliente, string titulo, int horasTotais)
         {
             var talento = await _context.Talentos.FindAsync(id);
             var cliente = await _context.Clientes.FindAsync(idCliente);
@@ -258,6 +258,7 @@ namespace TalentosIT.Web.Controllers
                 IdCliente = idCliente,
                 Titulo = string.IsNullOrWhiteSpace(titulo) ? $"Proposta - {talento.PrimeiroNome} {talento.Apelido}" : titulo,
                 Categoria = talento.Categoria ?? "Geral",
+                HorasTotais = horasTotais,
                 Descricao = $"Talento {talento.PrimeiroNome} {talento.Apelido} apresentado ao cliente."
             };
 
