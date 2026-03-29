@@ -85,7 +85,7 @@ public class ContaController : Controller
         var claims = new List<Claim>
         {
             new(ClaimTypes.Name, utilizador.Email),
-            new("UserId", utilizador.IdUtilizador.ToString())
+            new("IdUtilizador", utilizador.IdUtilizador.ToString())
         };
 
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
