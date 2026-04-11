@@ -59,12 +59,9 @@ namespace TalentosIT.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("IdUtilizador,PrimeiroNome,Apelido,Email,Telefone,PrecoHora,Categoria,Publico,Pais")] Talento talento)
         {
-            String? idUtilizador = User.FindFirst("IdUtilizador")?.Value;
-            if (idUtilizador == null)
-            {
-                return Unauthorized();
-            }
-            talento.IdUtilizador = int.Parse(idUtilizador);
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+            if (userIdClaim == null) return RedirectToAction("Login", "Conta");
+            talento.IdUtilizador = int.Parse(userIdClaim.Value);
 
             var utilizador = await _context.Utilizadors.FindAsync(talento.IdUtilizador);
             if (utilizador != null)

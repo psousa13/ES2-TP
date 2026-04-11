@@ -1,8 +1,10 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using TalentosIT.Web.Models;
 using Microsoft.AspNetCore.Authorization;
+
 
 namespace TalentosIT.Web.Controllers
 {
@@ -19,11 +21,9 @@ namespace TalentosIT.Web.Controllers
         [Authorize]
         public async Task<IActionResult> Index()
         {
-            String? idUtilizador = User.FindFirst("IdUtilizador").Value;
-            if (idUtilizador == null)
-            {
-                return Unauthorized();
-            }
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null) return RedirectToAction("Login", "Conta");
+            var idUtilizador = userIdClaim.Value;
             var talentosItContext = _context.Clientes
                 .Where(c => c.IdUtilizador == int.Parse(idUtilizador))
                 .Include(c => c.IdUtilizadorNavigation);
@@ -68,11 +68,9 @@ namespace TalentosIT.Web.Controllers
         {
             if (ModelState.IsValid)
             {
-                String? idUtilizador = User.FindFirst("IdUtilizador")?.Value;
-                if (idUtilizador == null)
-                {
-                    return Unauthorized();
-                }
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null) return RedirectToAction("Login", "Conta");
+                var idUtilizador = userIdClaim.Value;
                 cliente.IdUtilizador = int.Parse(idUtilizador);
 
                 _context.Add(cliente);

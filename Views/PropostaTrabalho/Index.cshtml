@@ -1,0 +1,41 @@
+@model IEnumerable<TalentosIT.Web.Models.PropostaTrabalho>
+
+@{
+    ViewData["Title"] = "Minhas Propostas";
+}
+
+<h1>Minhas Propostas</h1>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Nova Proposta</a>
+</p>
+
+<table class="table">
+    <thead>
+    <tr>
+        <th>Cliente</th>
+        <th>@Html.DisplayNameFor(model => model.Titulo)</th>
+        <th>@Html.DisplayNameFor(model => model.Categoria)</th>
+        <th>@Html.DisplayNameFor(model => model.HorasTotais)</th>
+        <th>@Html.DisplayNameFor(model => model.Descricao)</th>
+        <th></th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var item in Model)
+    {
+        <tr>
+            <td>@item.IdClienteNavigation?.PrimeiroNome @item.IdClienteNavigation?.Apelido</td>
+            <td>@Html.DisplayFor(modelItem => item.Titulo)</td>
+            <td>@Html.DisplayFor(modelItem => item.Categoria)</td>
+            <td>@Html.DisplayFor(modelItem => item.HorasTotais)</td>
+            <td>@Html.DisplayFor(modelItem => item.Descricao)</td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.IdProposta">Editar</a> |
+                <a asp-action="Details" asp-route-id="@item.IdProposta">Detalhes</a> |
+                <a asp-action="Delete" asp-route-id="@item.IdProposta">Eliminar</a>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>

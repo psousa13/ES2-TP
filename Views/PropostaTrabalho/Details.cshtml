@@ -1,0 +1,30 @@
+@model TalentosIT.Web.Models.PropostaTrabalho
+
+@{
+    ViewData["Title"] = "Detalhes da Proposta";
+}
+
+<h1>Detalhes da Proposta</h1>
+
+<div>
+    <h4>@Model.Titulo</h4>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-3 fw-bold">Cliente / Empresa</dt>
+        <dd class="col-sm-9">@Html.DisplayFor(model => model.IdClienteNavigation.PrimeiroNome)</dd>
+
+        <dt class="col-sm-3 fw-bold">Categoria</dt>
+        <dd class="col-sm-9">@Model.Categoria</dd>
+
+        <dt class="col-sm-3 fw-bold">Horas Totais Previstas</dt>
+        <dd class="col-sm-9">@Model.HorasTotais h</dd>
+
+        <dt class="col-sm-3 fw-bold">Descrição</dt>
+        <dd class="col-sm-9">@Model.Descricao</dd>
+    </dl>
+</div>
+<div class="mt-4">
+    <a asp-action="Edit" asp-route-id="@Model?.IdProposta" class="btn btn-primary">Editar</a>
+    <a asp-controller="PropostaSkills" asp-action="Gerir" asp-route-id="@Model?.IdProposta" class="btn btn-success ms-2">Gerir Skills Exigidas</a>
+    <a asp-action="Index" class="btn btn-outline-secondary ms-2">Voltar à Lista</a>
+</div>

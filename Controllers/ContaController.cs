@@ -30,12 +30,13 @@ public class ContaController : Controller
     public async Task<IActionResult> Register(RegisterViewModel model)
     {
         if (!ModelState.IsValid) return View(model);
-        
+
         if (await _context.Utilizadors.AnyAsync(u => u.Email == model.Email))
         {
             ModelState.AddModelError("Email", "Email já registado.");
             return View(model);
         }
+
         var hasher = new PasswordHasher<Utilizador>();
         var utilizador = new Utilizador
         {
@@ -45,10 +46,11 @@ public class ContaController : Controller
             PalavraPasse = hasher.HashPassword(null, model.PalavraPasse),
             Ativo = true
         };
+
         _context.Utilizadors.Add(utilizador);
         await _context.SaveChangesAsync();
 
-        return RedirectToAction("Index", "Login");
+        return RedirectToAction("Login", "Conta");
     }
 
     [HttpGet]
@@ -85,7 +87,7 @@ public class ContaController : Controller
         var claims = new List<Claim>
         {
             new(ClaimTypes.Name, utilizador.Email),
-            new("IdUtilizador", utilizador.IdUtilizador.ToString())
+            new(ClaimTypes.NameIdentifier, utilizador.IdUtilizador.ToString())
         };
 
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
