@@ -43,7 +43,7 @@ public class ContaController : Controller
             PrimeiroNome = model.PrimeiroNome,
             Apelido = model.Apelido,
             Email = model.Email,
-            PalavraPasse = hasher.HashPassword(null, model.PalavraPasse),
+            PalavraPasse = hasher.HashPassword(null!, model.PalavraPasse),
             Ativo = true
         };
 
@@ -67,11 +67,19 @@ public class ContaController : Controller
     {
         if (!ModelState.IsValid) return View(model);
 
-        var utilizador = await _context.Utilizadors.FirstOrDefaultAsync(u => u.Email == model.Email);
+        var utilizador = await _context.Utilizadors
+            .FirstOrDefaultAsync(u => u.Email == model.Email);
 
         if (utilizador == null)
         {
-            ModelState.AddModelError("", "Email inválido.");
+            ModelState.AddModelError("", "Email ou palavra-passe incorretos.");
+            return View(model);
+        }
+
+        // FIX: check if account is active
+        if (utilizador.Ativo == false)
+        {
+            ModelState.AddModelError("", "Conta desativada. Contacte o administrador.");
             return View(model);
         }
 
@@ -80,14 +88,17 @@ public class ContaController : Controller
 
         if (resultado == PasswordVerificationResult.Failed)
         {
-            ModelState.AddModelError("PalavraPasse", "Palavra passe incorreta.");
+            // FIX: generic message to not reveal which field is wrong
+            ModelState.AddModelError("", "Email ou palavra-passe incorretos.");
             return View(model);
         }
 
+        // FIX: use ClaimTypes.NameIdentifier consistently for IdUtilizador
         var claims = new List<Claim>
         {
             new(ClaimTypes.Name, utilizador.Email),
-            new(ClaimTypes.NameIdentifier, utilizador.IdUtilizador.ToString())
+            new(ClaimTypes.NameIdentifier, utilizador.IdUtilizador.ToString()),
+            new("NomeCompleto", $"{utilizador.PrimeiroNome} {utilizador.Apelido}")
         };
 
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);

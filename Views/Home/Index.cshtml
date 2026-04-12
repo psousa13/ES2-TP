@@ -1,8 +1,73 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@{
+    ViewData["Title"] = "Home";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="hero fade-up">
+    <p class="section-label">Plataforma de Talentos</p>
+    <h1>Descubra os melhores<br/>talentos em IT</h1>
+    <p>Conectamos profissionais, skills e oportunidades numa única plataforma moderna e eficiente.</p>
+    <div class="d-flex gap-3 justify-content-center flex-wrap">
+        <a class="btn btn-primary px-4" asp-controller="Talentos" asp-action="Index">Ver Talentos</a>
+        <a class="btn btn-outline-secondary px-4" asp-controller="Skills" asp-action="Index">Explorar Skills</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-5 fade-up fade-up-2">
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-value">—</div>
+            <div class="stat-label">Talentos</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-value">—</div>
+            <div class="stat-label">Skills</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-value">—</div>
+            <div class="stat-label">Clientes</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-value">—</div>
+            <div class="stat-label">Propostas</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 fade-up fade-up-3">
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <p class="section-label">Talentos</p>
+                <h5 class="card-title">Perfis de profissionais</h5>
+                <p class="card-text">Explore a base de talentos e encontre os profissionais certos para cada projeto.</p>
+                <a class="btn btn-outline-primary btn-sm mt-2" asp-controller="Talentos" asp-action="Index">Ver todos →</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <p class="section-label">Skills</p>
+                <h5 class="card-title">Catálogo de competências</h5>
+                <p class="card-text">Navegue pelo catálogo de skills técnicas e identifique os perfis mais adequados.</p>
+                <a class="btn btn-outline-primary btn-sm mt-2" asp-controller="Skills" asp-action="Index">Ver catálogo →</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <p class="section-label">Propostas</p>
+                <h5 class="card-title">Gestão de propostas</h5>
+                <p class="card-text">Acompanhe e gira as propostas de trabalho em aberto de forma centralizada.</p>
+                <a class="btn btn-outline-primary btn-sm mt-2" asp-controller="PropostaTrabalho" asp-action="Index">Ver propostas →</a>
+            </div>
+        </div>
+    </div>
 </div>

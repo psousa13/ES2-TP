@@ -1,10 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TalentosIT.Web.Models;
 using Microsoft.AspNetCore.Authorization;
 
 namespace TalentosIT.Web.Controllers
 {
+    [Authorize]
     public class TalentoExperienciasController : Controller
     {
         private readonly TalentosItContext _context;
@@ -14,8 +15,7 @@ namespace TalentosIT.Web.Controllers
             _context = context;
         }
 
-        // GET: Experiencias/Gerir
-        [Authorize]
+        // GET: TalentoExperiencias/Gerir/5
         public async Task<IActionResult> Gerir(int? id)
         {
             if (id == null) return NotFound();
@@ -25,12 +25,11 @@ namespace TalentosIT.Web.Controllers
                 .FirstOrDefaultAsync(t => t.IdTalento == id);
 
             if (talento == null) return NotFound();
-            
+
             return View(talento);
         }
 
-        // GET: Experiencias/Create
-        [Authorize]
+        // GET: TalentoExperiencias/Create?id=5
         public async Task<IActionResult> Create(int? id)
         {
             if (id == null) return NotFound();
@@ -42,47 +41,54 @@ namespace TalentosIT.Web.Controllers
             if (talento == null) return NotFound();
 
             ViewData["Talento"] = talento;
-            return View();
+            return View(new Experiencia { IdTalento = id.Value });
         }
 
-        // POST: Experiencias/Create
-        [Authorize]
+        // POST: TalentoExperiencias/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("IdTalento,Titulo,Empresa,AnoInicio,AnoFim")] Experiencia model)
         {
             var talento = await _context.Talentos
+                .Include(t => t.Experiencia)
                 .FirstOrDefaultAsync(t => t.IdTalento == model.IdTalento);
+
             if (talento == null) return NotFound();
             ViewData["Talento"] = talento;
 
             if (!ModelState.IsValid) return View(model);
 
-            if (model.AnoFim < model.AnoInicio)
+            // FIX: validate AnoFim >= AnoInicio
+            if (model.AnoFim.HasValue && model.AnoFim.Value < model.AnoInicio)
             {
-                ModelState.AddModelError("AnoFim", "Ano de Fim deve ser igual ou superior ao ano de início.");
+                ModelState.AddModelError("AnoFim", "O ano de fim deve ser igual ou superior ao ano de início.");
                 return View(model);
             }
 
-            var overlap = ValidarDatasExperiencia(model);
+            // FIX: validate year range makes sense
+            int anoAtual = DateTime.Now.Year;
+            if (model.AnoInicio > anoAtual)
+            {
+                ModelState.AddModelError("AnoInicio", "O ano de início não pode ser no futuro.");
+                return View(model);
+            }
+
+            // FIX: corrected overlap detection
+            var overlap = await ValidarSobreposicao(model);
             if (overlap != null)
             {
-                ModelState.AddModelError("AnoFim", "Período da experiência está sobreposto com o da experiência " + overlap.Titulo + ".");
+                ModelState.AddModelError("AnoInicio",
+                    $"O período sobrepõe-se com a experiência '{overlap.Titulo}' ({overlap.AnoInicio}–{(overlap.AnoFim.HasValue ? overlap.AnoFim.Value.ToString() : "Presente")}).");
                 return View(model);
             }
 
             _context.Add(model);
             await _context.SaveChangesAsync();
 
-            if (talento == null) return NotFound();
-
-            ViewData["Talento"] = talento;
-
             return RedirectToAction(nameof(Gerir), new { id = model.IdTalento });
         }
 
-        // GET: Experiencias/Edit
-        [Authorize]
+        // GET: TalentoExperiencias/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
@@ -90,12 +96,12 @@ namespace TalentosIT.Web.Controllers
             var experiencia = await _context.Experiencias
                 .Include(e => e.IdTalentoNavigation)
                 .FirstOrDefaultAsync(e => e.IdExperiencia == id);
+
             if (experiencia == null) return NotFound();
             return View(experiencia);
         }
 
-        // POST: Experiencias/Edit
-        [Authorize]
+        // POST: TalentoExperiencias/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("IdExperiencia,IdTalento,Titulo,Empresa,AnoInicio,AnoFim")] Experiencia model)
@@ -104,16 +110,26 @@ namespace TalentosIT.Web.Controllers
 
             if (!ModelState.IsValid) return View(model);
 
-            if (model.AnoFim < model.AnoInicio)
+            // FIX: validate AnoFim >= AnoInicio
+            if (model.AnoFim.HasValue && model.AnoFim.Value < model.AnoInicio)
             {
-                ModelState.AddModelError("AnoFim", "Ano de Fim deve ser igual ou superior ao ano de início.");
+                ModelState.AddModelError("AnoFim", "O ano de fim deve ser igual ou superior ao ano de início.");
                 return View(model);
             }
 
-            var overlap = ValidarDatasExperiencia(model);
+            int anoAtual = DateTime.Now.Year;
+            if (model.AnoInicio > anoAtual)
+            {
+                ModelState.AddModelError("AnoInicio", "O ano de início não pode ser no futuro.");
+                return View(model);
+            }
+
+            // FIX: corrected overlap detection
+            var overlap = await ValidarSobreposicao(model);
             if (overlap != null)
             {
-                ModelState.AddModelError("AnoFim", "Período da experiência está sobreposto com o da experiência " + overlap.Titulo + ".");
+                ModelState.AddModelError("AnoInicio",
+                    $"O período sobrepõe-se com a experiência '{overlap.Titulo}' ({overlap.AnoInicio}–{(overlap.AnoFim.HasValue ? overlap.AnoFim.Value.ToString() : "Presente")}).");
                 return View(model);
             }
 
@@ -122,13 +138,13 @@ namespace TalentosIT.Web.Controllers
             return RedirectToAction(nameof(Gerir), new { id = model.IdTalento });
         }
 
-        // GET: Experiencias/Delete
-        [Authorize]
+        // GET: TalentoExperiencias/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
 
-            Experiencia? experiencia = await _context.Experiencias
+            var experiencia = await _context.Experiencias
+                .Include(e => e.IdTalentoNavigation)
                 .FirstOrDefaultAsync(m => m.IdExperiencia == id);
 
             if (experiencia == null) return NotFound();
@@ -136,8 +152,7 @@ namespace TalentosIT.Web.Controllers
             return View(experiencia);
         }
 
-        // POST: Experiencias/Delete
-        [Authorize]
+        // POST: TalentoExperiencias/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
@@ -145,14 +160,27 @@ namespace TalentosIT.Web.Controllers
             var experiencia = await _context.Experiencias.FindAsync(id);
             if (experiencia == null) return NotFound();
 
-             _context.Experiencias.Remove(experiencia);
+            _context.Experiencias.Remove(experiencia);
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Gerir), new { id= experiencia.IdTalento });
+            return RedirectToAction(nameof(Gerir), new { id = experiencia.IdTalento });
         }
 
-        private Experiencia? ValidarDatasExperiencia(Experiencia model)
+        // FIX: correct overlap logic
+        // Two periods overlap if: startA <= endB AND startB <= endA
+        // Treating null AnoFim as "present" (i.e., effectively infinity)
+        private Task<Experiencia?> ValidarSobreposicao(Experiencia model)
         {
-            return null;
+            int novoInicio = model.AnoInicio;
+            int? novoFim = model.AnoFim;
+
+            return _context.Experiencias.FirstOrDefaultAsync(e =>
+                e.IdTalento == model.IdTalento &&
+                e.IdExperiencia != model.IdExperiencia &&
+                // existing starts before or when new ends (or new has no end)
+                e.AnoInicio <= (novoFim ?? int.MaxValue) &&
+                // existing ends after or when new starts (or existing has no end)
+                (e.AnoFim == null || e.AnoFim >= novoInicio)
+            );
         }
     }
 }

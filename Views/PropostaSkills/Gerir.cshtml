@@ -31,7 +31,6 @@
     </div>
 }
 
-@* ── Skills já exigidas ── *@
 <h5 class="mt-3">Skills exigidas</h5>
 
 @if (!Model.PropostaSkills.Any())
@@ -45,7 +44,7 @@ else
             <tr>
                 <th>Skill</th>
                 <th>Área Profissional</th>
-                <th style="width:200px">Mínimo de Anos de Experiência</th>
+                <th style="width:220px">Mínimo de Anos de Experiência</th>
                 <th style="width:120px"></th>
             </tr>
         </thead>
@@ -80,10 +79,9 @@ else
     </table>
 }
 
-@* ── Adicionar nova skill exigida ── *@
 <h5 class="mt-4">Adicionar skill exigida</h5>
 
-@if (!ViewData.ContainsKey("IdSkill") || ((Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["IdSkill"]!).Count() == 0)
+@if (!((Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["IdSkill"]!).Any())
 {
     <p class="text-muted">Todas as skills disponíveis já estão associadas a esta proposta.</p>
 }
@@ -117,6 +115,7 @@ else
 }
 
 <div class="mt-4">
-    @* Link back — adjust if your teammates create a PropostaTrabalho Details view *@
-    <a asp-controller="Talentos" asp-action="Index" class="btn btn-secondary">← Voltar</a>
+    @* FIX: back button now points to PropostaTrabalho/Details  *@
+    <a asp-controller="PropostaTrabalho" asp-action="Details" asp-route-id="@Model.IdProposta"
+       class="btn btn-secondary">← Voltar à Proposta</a>
 </div>

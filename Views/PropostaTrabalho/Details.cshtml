@@ -4,27 +4,75 @@
     ViewData["Title"] = "Detalhes da Proposta";
 }
 
-<h1>Detalhes da Proposta</h1>
+<h2>Detalhes da Proposta</h2>
 
-<div>
-    <h4>@Model.Titulo</h4>
-    <hr />
-    <dl class="row">
-        <dt class="col-sm-3 fw-bold">Cliente / Empresa</dt>
-        <dd class="col-sm-9">@Html.DisplayFor(model => model.IdClienteNavigation.PrimeiroNome)</dd>
+@if (TempData["Sucesso"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        @TempData["Sucesso"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Aviso"] != null)
+{
+    <div class="alert alert-warning alert-dismissible fade show">
+        @TempData["Aviso"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
 
-        <dt class="col-sm-3 fw-bold">Categoria</dt>
-        <dd class="col-sm-9">@Model.Categoria</dd>
+<div class="row">
+    <div class="col-md-6">
+        <dl class="row">
+            <dt class="col-sm-4">Título</dt>
+            <dd class="col-sm-8">@Model.Titulo</dd>
 
-        <dt class="col-sm-3 fw-bold">Horas Totais Previstas</dt>
-        <dd class="col-sm-9">@Model.HorasTotais h</dd>
+            <dt class="col-sm-4">Cliente</dt>
+            <dd class="col-sm-8">@Model.IdClienteNavigation?.PrimeiroNome @Model.IdClienteNavigation?.Apelido</dd>
 
-        <dt class="col-sm-3 fw-bold">Descrição</dt>
-        <dd class="col-sm-9">@Model.Descricao</dd>
-    </dl>
+            <dt class="col-sm-4">Categoria</dt>
+            <dd class="col-sm-8">@(Model.Categoria ?? "—")</dd>
+
+            <dt class="col-sm-4">Horas Totais</dt>
+            <dd class="col-sm-8">@(Model.HorasTotais.HasValue ? $"{Model.HorasTotais} h" : "—")</dd>
+
+            <dt class="col-sm-4">Descrição</dt>
+            <dd class="col-sm-8">@(Model.Descricao ?? "—")</dd>
+        </dl>
+    </div>
 </div>
+
+@* Skills exigidas *@
+<h5 class="mt-4">Skills Exigidas</h5>
+@if (!Model.PropostaSkills.Any())
+{
+    <p class="text-muted">Nenhuma skill exigida definida.</p>
+}
+else
+{
+    <table class="table table-sm w-75">
+        <thead class="table-light">
+            <tr>
+                <th>Skill</th>
+                <th>Área Profissional</th>
+                <th>Mínimo de Anos de Experiência</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var ps in Model.PropostaSkills.OrderBy(ps => ps.IdSkillNavigation?.Nome))
+            {
+                <tr>
+                    <td>@ps.IdSkillNavigation?.Nome</td>
+                    <td>@(ps.IdSkillNavigation?.AreaProfissional ?? "—")</td>
+                    <td>@ps.AnosMinimosExperiencia</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
 <div class="mt-4">
-    <a asp-action="Edit" asp-route-id="@Model?.IdProposta" class="btn btn-primary">Editar</a>
-    <a asp-controller="PropostaSkills" asp-action="Gerir" asp-route-id="@Model?.IdProposta" class="btn btn-success ms-2">Gerir Skills Exigidas</a>
-    <a asp-action="Index" class="btn btn-outline-secondary ms-2">Voltar à Lista</a>
+    <a asp-action="Edit" asp-route-id="@Model.IdProposta" class="btn btn-warning">Editar</a>
+    <a asp-controller="PropostaSkills" asp-action="Gerir" asp-route-id="@Model.IdProposta" class="btn btn-primary ms-2">Gerir Skills Exigidas</a>
+    <a asp-action="Index" class="btn btn-secondary ms-2">← Voltar à Lista</a>
 </div>

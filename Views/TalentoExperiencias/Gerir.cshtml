@@ -59,9 +59,9 @@ else
                     <td>@item.Titulo</td>
                     <td>@item.Empresa</td>
                     <td>@item.AnoInicio</td>
-                    <td>@item.AnoFim</td>
+                    <td>@(item.AnoFim?.ToString() ?? "---")</td>
                     <td>
-                        <a asp-action="Edit" asp-route-id="@item.IdExperiencia" class="btn btn-sm btn-primary">Editar</a> |
+                        <a asp-action="Edit" asp-route-id="@item.IdExperiencia" class="btn btn-sm btn-primary">Editar</a>
                         <a asp-action="Delete" asp-route-id="@item.IdExperiencia" class="btn btn-sm btn-danger">Eliminar</a>
                     </td>
                 </tr>
