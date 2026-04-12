@@ -58,13 +58,13 @@ namespace TalentosIT.Web.Controllers
 
             if (!ModelState.IsValid) return View(model);
 
-            if (model.AnoFim < model.AnoInicio)
+            if (model.AnoFim != null && model.AnoFim < model.AnoInicio)
             {
                 ModelState.AddModelError("AnoFim", "Ano de Fim deve ser igual ou superior ao ano de início.");
                 return View(model);
             }
 
-            var overlap = ValidarDatasExperiencia(model);
+            var overlap = await ValidarDatasExperiencia(model);
             if (overlap != null)
             {
                 ModelState.AddModelError("AnoFim", "Período da experiência está sobreposto com o da experiência " + overlap.Titulo + ".");
@@ -104,13 +104,13 @@ namespace TalentosIT.Web.Controllers
 
             if (!ModelState.IsValid) return View(model);
 
-            if (model.AnoFim < model.AnoInicio)
+            if (model.AnoFim != null && model.AnoFim < model.AnoInicio)
             {
                 ModelState.AddModelError("AnoFim", "Ano de Fim deve ser igual ou superior ao ano de início.");
                 return View(model);
             }
 
-            var overlap = ValidarDatasExperiencia(model);
+            var overlap = await ValidarDatasExperiencia(model);
             if (overlap != null)
             {
                 ModelState.AddModelError("AnoFim", "Período da experiência está sobreposto com o da experiência " + overlap.Titulo + ".");
@@ -150,9 +150,14 @@ namespace TalentosIT.Web.Controllers
             return RedirectToAction(nameof(Gerir), new { id= experiencia.IdTalento });
         }
 
-        private Experiencia? ValidarDatasExperiencia(Experiencia model)
+        private Task<Experiencia?> ValidarDatasExperiencia(Experiencia model)
         {
-            return null;
+            return _context.Experiencias.FirstOrDefaultAsync(
+                e => e.IdTalento == model.IdTalento
+                && e.IdExperiencia != model.IdExperiencia
+                && e.AnoInicio < model.AnoFim
+                && (e.AnoFim == null || model.AnoInicio < e.AnoFim)
+            );
         }
     }
 }
