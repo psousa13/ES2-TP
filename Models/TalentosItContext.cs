@@ -17,7 +17,7 @@ public partial class TalentosItContext : DbContext
 
     public virtual DbSet<Cliente> Clientes { get; set; }
 
-    public virtual DbSet<Experiencium> Experiencia { get; set; }
+    public virtual DbSet<Experiencia> Experiencias { get; set; }
 
     public virtual DbSet<PropostaSkill> PropostaSkills { get; set; }
 
@@ -88,7 +88,7 @@ public partial class TalentosItContext : DbContext
                 .HasConstraintName("cliente_id_utilizador_fkey");
         });
 
-        modelBuilder.Entity<Experiencium>(entity =>
+        modelBuilder.Entity<Experiencia>(entity =>
         {
             entity.HasKey(e => e.IdExperiencia).HasName("experiencia_pkey");
 

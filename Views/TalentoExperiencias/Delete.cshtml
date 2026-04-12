@@ -1,0 +1,30 @@
+@model TalentosIT.Web.Models.Experiencia
+
+@{
+    ViewData["Title"] = "Eliminar Experiência";
+}
+
+<h1>Eliminar Experiência</h1>
+
+<h3>Tem a certeza que quer eliminar esta experiência?</h3>
+<div>
+    <dl class="row">
+        <dt class="col-sm-3">Título</dt>
+        <dd class="col-sm-9">@Model.Titulo</dd>
+
+        <dt class="col-sm-3">Empresa</dt>
+        <dd class="col-sm-9">@Model.Empresa</dd>
+
+        <dt class="col-sm-3">Ano de Início </dt>
+        <dd class="col-sm-9">@Model.AnoInicio</dd>
+
+        <dt class="col-sm-3">Ano de Fim</dt>
+        <dd class="col-sm-9">@Model.AnoFim</dd>
+    </dl>
+
+    <form asp-action="Delete">
+        <input type="hidden" asp-for="IdTalento" />
+        <input type="submit" value="Eliminar" class="btn btn-danger" /> |
+        <a asp-action="Index" asp-route-id="@Model.IdTalento" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
