@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -18,7 +19,7 @@ public class PerfilController : Controller
     [Authorize]
     public async Task<IActionResult> Edit()
     {
-        String? idUtilizador = User.FindFirst("IdUtilizador")?.Value;
+        String? idUtilizador = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (idUtilizador == null)
         {
             return Unauthorized();
@@ -53,7 +54,7 @@ public class PerfilController : Controller
             return View(model);
         }
 
-        String? idUtilizador = User.FindFirst("IdUtilizador")?.Value;
+        String? idUtilizador = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (idUtilizador == null)
         {
             return Unauthorized();

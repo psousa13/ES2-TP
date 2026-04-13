@@ -71,7 +71,7 @@ public class ContaController : Controller
 
         if (utilizador == null)
         {
-            ModelState.AddModelError("", "Email inválido.");
+            ModelState.AddModelError("Email", "Email inválido.");
             return View(model);
         }
 
