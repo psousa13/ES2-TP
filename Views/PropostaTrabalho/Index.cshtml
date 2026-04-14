@@ -1,39 +1,43 @@
 @model IEnumerable<TalentosIT.Web.Models.PropostaTrabalho>
-
 @{
-    ViewData["Title"] = "Minhas Propostas";
+    ViewData["Title"] = "Propostas de Trabalho";
 }
 
-<h1>Minhas Propostas</h1>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Propostas de Trabalho</h1>
+    @if (User.IsInRole("GestorUtilizadores") || User.IsInRole("Admin"))
+    {
+        <a asp-action="Create" class="btn btn-primary">+ Nova Proposta</a>
+    }
+</div>
 
-<p>
-    <a asp-action="Create" class="btn btn-primary">Nova Proposta</a>
-</p>
-
-<table class="table">
+<table class="table table-striped">
     <thead>
-    <tr>
-        <th>Cliente</th>
-        <th>@Html.DisplayNameFor(model => model.Titulo)</th>
-        <th>@Html.DisplayNameFor(model => model.Categoria)</th>
-        <th>@Html.DisplayNameFor(model => model.HorasTotais)</th>
-        <th>@Html.DisplayNameFor(model => model.Descricao)</th>
-        <th></th>
-    </tr>
+        <tr>
+            <th>Título</th>
+            <th>Cliente</th>
+            <th>Categoria</th>
+            <th>Horas</th>
+            <th>Descrição</th>
+            <th></th>
+        </tr>
     </thead>
     <tbody>
     @foreach (var item in Model)
     {
         <tr>
+            <td>@item.Titulo</td>
             <td>@item.IdClienteNavigation?.PrimeiroNome @item.IdClienteNavigation?.Apelido</td>
-            <td>@Html.DisplayFor(modelItem => item.Titulo)</td>
-            <td>@Html.DisplayFor(modelItem => item.Categoria)</td>
-            <td>@Html.DisplayFor(modelItem => item.HorasTotais)</td>
-            <td>@Html.DisplayFor(modelItem => item.Descricao)</td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.IdProposta">Editar</a> |
-                <a asp-action="Details" asp-route-id="@item.IdProposta">Detalhes</a> |
-                <a asp-action="Delete" asp-route-id="@item.IdProposta">Eliminar</a>
+            <td>@(item.Categoria ?? "—")</td>
+            <td>@item.HorasTotais h</td>
+            <td class="text-muted small">@(item.Descricao?.Length > 60 ? item.Descricao[..60] + "…" : item.Descricao)</td>
+            <td style="white-space:nowrap;">
+                <a asp-action="Details" asp-route-id="@item.IdProposta" class="btn btn-sm btn-info">Detalhes</a>
+                @if (User.IsInRole("GestorUtilizadores") || User.IsInRole("Admin"))
+                {
+                    <a asp-action="Edit" asp-route-id="@item.IdProposta" class="btn btn-sm btn-warning ms-1">Editar</a>
+                    <a asp-action="Delete" asp-route-id="@item.IdProposta" class="btn btn-sm btn-danger ms-1">Eliminar</a>
+                }
             </td>
         </tr>
     }

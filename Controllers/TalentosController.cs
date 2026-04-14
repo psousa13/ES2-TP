@@ -1,13 +1,11 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using TalentosIT.Web.Models;
 using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims;
 
 namespace TalentosIT.Web.Controllers
 {
-    [Authorize]
     public class TalentosController : Controller
     {
         private readonly TalentosItContext _context;
@@ -18,18 +16,29 @@ namespace TalentosIT.Web.Controllers
         }
 
         // GET: Talentos
+        [Authorize]
         public async Task<IActionResult> Index()
         {
-            var talentos = await _context.Talentos
-                .Include(t => t.IdUtilizadorNavigation)
-                .ToListAsync();
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+            if (userIdClaim == null) return RedirectToAction("Login", "Conta");
+            var userId = int.Parse(userIdClaim.Value);
+
+            IQueryable<Talento> query = _context.Talentos.Include(t => t.IdUtilizadorNavigation);
+
+            // Workers only see their own talent profile; admins see all
+            if (!User.IsInRole("Admin"))
+                query = query.Where(t => t.IdUtilizador == userId);
+
+            var talentos = await query.ToListAsync();
             return View(talentos);
         }
 
         // GET: Talentos/Details/5
+        [Authorize]
         public async Task<IActionResult> Details(int? id)
         {
-            if (id == null) return NotFound();
+            if (id == null)
+                return NotFound();
 
             var talento = await _context.Talentos
                 .Include(t => t.IdUtilizadorNavigation)
@@ -38,12 +47,14 @@ namespace TalentosIT.Web.Controllers
                 .Include(t => t.Experiencia)
                 .FirstOrDefaultAsync(m => m.IdTalento == id);
 
-            if (talento == null) return NotFound();
+            if (talento == null)
+                return NotFound();
 
             return View(talento);
         }
 
         // GET: Talentos/Create
+        [Authorize]
         public async Task<IActionResult> Create()
         {
             await CarregarViewData();
@@ -51,11 +62,12 @@ namespace TalentosIT.Web.Controllers
         }
 
         // POST: Talentos/Create
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Telefone,PrecoHora,Categoria,Publico,Pais")] Talento talento)
+        public async Task<IActionResult> Create([Bind("IdUtilizador,PrimeiroNome,Apelido,Email,Telefone,PrecoHora,Categoria,Publico,Pais")] Talento talento)
         {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
             if (userIdClaim == null) return RedirectToAction("Login", "Conta");
             talento.IdUtilizador = int.Parse(userIdClaim.Value);
 
@@ -64,7 +76,7 @@ namespace TalentosIT.Web.Controllers
             {
                 talento.PrimeiroNome = utilizador.PrimeiroNome;
                 talento.Apelido = utilizador.Apelido;
-                talento.Email = utilizador.Email; // use real login email
+                talento.Email = utilizador.Email; // FIX: use the real login email
             }
             else
             {
@@ -76,7 +88,6 @@ namespace TalentosIT.Web.Controllers
             if (string.IsNullOrWhiteSpace(talento.Pais)) talento.Pais = "-";
             if (string.IsNullOrWhiteSpace(talento.Categoria)) talento.Categoria = "Outro";
             talento.PrecoHora ??= 0;
-            talento.Publico ??= false;
 
             ModelState.Remove("PrimeiroNome");
             ModelState.Remove("Apelido");
@@ -87,6 +98,7 @@ namespace TalentosIT.Web.Controllers
 
             if (ModelState.IsValid)
             {
+                talento.Publico ??= false;
                 _context.Add(talento);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
@@ -97,38 +109,35 @@ namespace TalentosIT.Web.Controllers
         }
 
         // GET: Talentos/Edit/5
+        [Authorize]
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null) return NotFound();
+            if (id == null)
+                return NotFound();
 
             var talento = await _context.Talentos.FindAsync(id);
-            if (talento == null) return NotFound();
+            if (talento == null)
+                return NotFound();
 
             await CarregarViewData(talento.IdUtilizador);
             return View(talento);
         }
 
         // POST: Talentos/Edit/5
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("IdTalento,IdUtilizador,Telefone,PrecoHora,Categoria,Publico,Pais")] Talento talento)
+        public async Task<IActionResult> Edit(int id, [Bind("IdTalento,IdUtilizador,PrimeiroNome,Apelido,Email,Telefone,PrecoHora,Categoria,Publico")] Talento talento)
         {
-            if (id != talento.IdTalento) return NotFound();
+            if (id != talento.IdTalento)
+                return NotFound();
 
-            // Always sync name+email from utilizador
+            if (string.IsNullOrWhiteSpace(talento.PrimeiroNome)) talento.PrimeiroNome = "-";
+            if (string.IsNullOrWhiteSpace(talento.Apelido)) talento.Apelido = "-";
+
+            // FIX: always sync email from the utilizador instead of generating a placeholder
             var utilizador = await _context.Utilizadors.FindAsync(talento.IdUtilizador);
-            if (utilizador != null)
-            {
-                talento.PrimeiroNome = utilizador.PrimeiroNome;
-                talento.Apelido = utilizador.Apelido;
-                talento.Email = utilizador.Email;
-            }
-            else
-            {
-                talento.PrimeiroNome = "-";
-                talento.Apelido = "-";
-                talento.Email = "-";
-            }
+            talento.Email = utilizador?.Email ?? talento.Email;
 
             if (string.IsNullOrWhiteSpace(talento.Pais)) talento.Pais = "-";
             if (string.IsNullOrWhiteSpace(talento.Categoria)) talento.Categoria = "Outro";
@@ -150,8 +159,10 @@ namespace TalentosIT.Web.Controllers
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!TalentoExists(talento.IdTalento)) return NotFound();
-                    else throw;
+                    if (!TalentoExists(talento.IdTalento))
+                        return NotFound();
+                    else
+                        throw;
                 }
                 return RedirectToAction(nameof(Index));
             }
@@ -161,34 +172,28 @@ namespace TalentosIT.Web.Controllers
         }
 
         // GET: Talentos/Delete/5
+        [Authorize]
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null) return NotFound();
+            if (id == null)
+                return NotFound();
 
             var talento = await _context.Talentos
                 .Include(t => t.IdUtilizadorNavigation)
                 .FirstOrDefaultAsync(m => m.IdTalento == id);
 
-            if (talento == null) return NotFound();
+            if (talento == null)
+                return NotFound();
 
             return View(talento);
         }
 
         // POST: Talentos/Delete/5
+        [Authorize]
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            // FIX: manually remove related records to avoid FK constraint errors
-            var talentoSkills = _context.TalentoSkills.Where(ts => ts.IdTalento == id);
-            _context.TalentoSkills.RemoveRange(talentoSkills);
-
-            var experiencias = _context.Experiencias.Where(e => e.IdTalento == id);
-            _context.Experiencias.RemoveRange(experiencias);
-
-            // Also remove proposals linked to this talent's user/client relationship
-            // (propostas are linked to utilizador, not talento directly, so leave them)
-
             var talento = await _context.Talentos.FindAsync(id);
             if (talento != null)
                 _context.Talentos.Remove(talento);
@@ -202,12 +207,15 @@ namespace TalentosIT.Web.Controllers
         // ---------------------------------------------------------------
 
         // GET: Talentos/AtribuirCliente/5
+        [Authorize]
         public async Task<IActionResult> AtribuirCliente(int? id)
         {
-            if (id == null) return NotFound();
+            if (id == null)
+                return NotFound();
 
             var talento = await _context.Talentos.FirstOrDefaultAsync(t => t.IdTalento == id);
-            if (talento == null) return NotFound();
+            if (talento == null)
+                return NotFound();
 
             var clientes = await _context.Clientes
                 .Where(c => c.IdUtilizador == talento.IdUtilizador)
@@ -230,6 +238,7 @@ namespace TalentosIT.Web.Controllers
         }
 
         // POST: Talentos/AtribuirCliente/5
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AtribuirCliente(int id, int idCliente, string titulo, int horasTotais)
@@ -237,7 +246,8 @@ namespace TalentosIT.Web.Controllers
             var talento = await _context.Talentos.FindAsync(id);
             var cliente = await _context.Clientes.FindAsync(idCliente);
 
-            if (talento == null || cliente == null) return NotFound();
+            if (talento == null || cliente == null)
+                return NotFound();
 
             bool jaExiste = await _context.PropostaTrabalhos
                 .AnyAsync(p => p.IdUtilizador == talento.IdUtilizador

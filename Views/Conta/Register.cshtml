@@ -4,40 +4,119 @@
     ViewData["Title"] = "Criar Conta";
 }
 
-<h1>Criar Conta</h1>
+<div class="row justify-content-center mt-4">
+<div class="col-md-6">
+<h1 class="mb-4">Criar Conta</h1>
 
 <form asp-action="Register" method="post">
-    <div class="form-group">
-        <label asp-for="PrimeiroNome" class="control-label">Primeiro Nome</label>
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+    <div class="mb-3">
+        <label asp-for="PrimeiroNome" class="form-label">Primeiro Nome</label>
         <input asp-for="PrimeiroNome" class="form-control"/>
         <span asp-validation-for="PrimeiroNome" class="text-danger"></span>
     </div>
-    <div class="form-group">
-        <label asp-for="Apelido" class="control-label"></label>
+    <div class="mb-3">
+        <label asp-for="Apelido" class="form-label">Apelido</label>
         <input asp-for="Apelido" class="form-control"/>
         <span asp-validation-for="Apelido" class="text-danger"></span>
     </div>
-    <div class="form-group">
-        <label asp-for="Email" class="control-label"></label>
+    <div class="mb-3">
+        <label asp-for="Email" class="form-label">Email</label>
         <input asp-for="Email" class="form-control"/>
         <span asp-validation-for="Email" class="text-danger"></span>
     </div>
-    <div class="form-group">
-        <label asp-for="PalavraPasse" class="control-label">Palavra Passe</label>
+    <div class="mb-3">
+        <label asp-for="PalavraPasse" class="form-label">Palavra Passe</label>
         <input asp-for="PalavraPasse" type="password" class="form-control"/>
         <span asp-validation-for="PalavraPasse" class="text-danger"></span>
     </div>
-    <div class="form-group">
-        <label asp-for="ConfirmarPalavraPasse" class="control-label">Confirmar Palavra Passe</label>
+    <div class="mb-4">
+        <label asp-for="ConfirmarPalavraPasse" class="form-label">Confirmar Palavra Passe</label>
         <input asp-for="ConfirmarPalavraPasse" type="password" class="form-control"/>
         <span asp-validation-for="ConfirmarPalavraPasse" class="text-danger"></span>
     </div>
 
-    <div class="form-group">
+    <div class="mb-4">
+        <label class="form-label fw-semibold d-block mb-2">Tipo de Conta</label>
+        <div class="d-flex gap-3">
+            <div class="card flex-fill role-card" id="card-worker" style="cursor:pointer; border-width:2px;">
+                <div class="card-body py-3">
+                    <input type="radio" name="TipoUtilizador" id="tipo-worker" value="utilizador" class="d-none" checked />
+                    <label for="tipo-worker" style="cursor:pointer; margin:0; display:block;">
+                        <div class="fw-semibold mb-1">👷 Profissional</div>
+                        <small class="text-muted">Configure o seu perfil de talento, adicione skills e candidate-se a propostas.</small>
+                    </label>
+                </div>
+            </div>
+            <div class="card flex-fill role-card" id="card-client" style="cursor:pointer; border-width:2px;">
+                <div class="card-body py-3">
+                    <input type="radio" name="TipoUtilizador" id="tipo-client" value="gestor_utilizadores" class="d-none" />
+                    <label for="tipo-client" style="cursor:pointer; margin:0; display:block;">
+                        <div class="fw-semibold mb-1">🏢 Cliente</div>
+                        <small class="text-muted">Publique propostas de trabalho e encontre os melhores talentos.</small>
+                    </label>
+                </div>
+            </div>
+        </div>
+        <span asp-validation-for="TipoUtilizador" class="text-danger"></span>
+    </div>
+
+    @* Address fields: only shown for Cliente *@
+    <div id="address-fields" style="display:none;">
+        <hr class="my-3"/>
+        <p class="text-muted small mb-3">Informação de empresa / morada</p>
+        <div class="mb-3">
+            <label asp-for="Rua" class="form-label">Rua</label>
+            <input asp-for="Rua" class="form-control" placeholder="ex: Rua das Flores"/>
+            <span asp-validation-for="Rua" class="text-danger"></span>
+        </div>
+        <div class="row mb-3">
+            <div class="col-4">
+                <label asp-for="NumPorta" class="form-label">Nº Porta</label>
+                <input asp-for="NumPorta" class="form-control" placeholder="ex: 12A"/>
+                <span asp-validation-for="NumPorta" class="text-danger"></span>
+            </div>
+            <div class="col-8">
+                <label asp-for="Cidade" class="form-label">Cidade</label>
+                <input asp-for="Cidade" class="form-control" placeholder="ex: Lisboa"/>
+                <span asp-validation-for="Cidade" class="text-danger"></span>
+            </div>
+        </div>
+        <div class="mb-4">
+            <label asp-for="Pais" class="form-label">País</label>
+            <input asp-for="Pais" class="form-control" placeholder="ex: Portugal"/>
+            <span asp-validation-for="Pais" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2">
         <input type="submit" value="Criar Conta" class="btn btn-primary" />
+        <a asp-controller="Conta" asp-action="Login" class="btn btn-outline-secondary">Já tenho conta</a>
     </div>
 </form>
+</div>
+</div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        const workerCard = document.getElementById('card-worker');
+        const clientCard = document.getElementById('card-client');
+        const workerRadio = document.getElementById('tipo-worker');
+        const clientRadio = document.getElementById('tipo-client');
+        const addressFields = document.getElementById('address-fields');
+
+        function updateCards() {
+            workerCard.style.borderColor = workerRadio.checked ? '#6366f1' : '';
+            workerCard.style.background  = workerRadio.checked ? 'rgba(99,102,241,0.07)' : '';
+            clientCard.style.borderColor = clientRadio.checked ? '#6366f1' : '';
+            clientCard.style.background  = clientRadio.checked ? 'rgba(99,102,241,0.07)' : '';
+            addressFields.style.display  = clientRadio.checked ? 'block' : 'none';
+        }
+
+        workerCard.addEventListener('click', () => { workerRadio.checked = true; updateCards(); });
+        clientCard.addEventListener('click', () => { clientRadio.checked = true; updateCards(); });
+        updateCards();
+    </script>
 }

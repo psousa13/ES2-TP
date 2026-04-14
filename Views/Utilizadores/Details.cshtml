@@ -1,54 +1,42 @@
-﻿@model TalentosIT.Web.Models.Utilizador
-
+@model TalentosIT.Web.Models.Utilizador
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Detalhes do Utilizador";
+    var badge = Model.TipoUtilizador switch {
+        TalentosIT.Web.Models.TipoUtilizador.Admin => ("Admin", "bg-danger"),
+        TalentosIT.Web.Models.TipoUtilizador.GestorUtilizadores => ("Cliente", "bg-primary"),
+        _ => ("Profissional", "bg-success")
+    };
 }
 
-<h1>Details</h1>
-
-<div>
-    <h4>Utilizador</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.PrimeiroNome)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.PrimeiroNome)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Apelido)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Apelido)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Email)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Email)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Telefone)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Telefone)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.PalavraPasse)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.PalavraPasse)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Ativo)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Ativo)
-        </dd>
-    </dl>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Detalhes do Utilizador</h1>
+    <a asp-action="Index" class="btn btn-outline-secondary">← Voltar</a>
 </div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.IdUtilizador">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+
+<dl class="row" style="max-width:500px;">
+    <dt class="col-sm-4">Nome</dt>
+    <dd class="col-sm-8">@Model.PrimeiroNome @Model.Apelido</dd>
+
+    <dt class="col-sm-4">Email</dt>
+    <dd class="col-sm-8">@Model.Email</dd>
+
+    <dt class="col-sm-4">Telefone</dt>
+    <dd class="col-sm-8">@(Model.Telefone ?? "—")</dd>
+
+    <dt class="col-sm-4">Tipo</dt>
+    <dd class="col-sm-8"><span class="badge @badge.Item2">@badge.Item1</span></dd>
+
+    <dt class="col-sm-4">Estado</dt>
+    <dd class="col-sm-8">
+        @if (Model.Ativo == true)
+        { <span class="badge bg-success">Ativo</span> }
+        else
+        { <span class="badge bg-secondary">Inativo</span> }
+    </dd>
+</dl>
+
+<div class="d-flex gap-2 mt-3">
+    <a asp-action="Edit" asp-route-id="@Model.IdUtilizador" class="btn btn-warning">Editar</a>
+    <a asp-action="Delete" asp-route-id="@Model.IdUtilizador" class="btn btn-danger">Eliminar</a>
+    <a asp-action="Index" class="btn btn-outline-secondary">Voltar à Lista</a>
 </div>

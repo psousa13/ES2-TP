@@ -1,44 +1,28 @@
 @model TalentosIT.Web.Models.Skill
-
 @{
     ViewData["Title"] = "Eliminar Skill";
-    bool emUso = (bool)(ViewData["EmUso"] ?? false);
 }
 
-<h2>Eliminar Skill</h2>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Eliminar Skill</h1>
+    <a asp-action="Index" class="btn btn-outline-secondary">← Voltar</a>
+</div>
 
-@if (TempData["Erro"] != null)
-{
-    <div class="alert alert-danger">@TempData["Erro"]</div>
-}
+<div class="alert alert-danger">
+    <strong>Atenção!</strong> Tem a certeza que pretende eliminar esta skill? Esta ação não pode ser desfeita.
+</div>
 
-@if (emUso)
-{
-    <div class="alert alert-warning">
-        <strong>Não é possível eliminar esta skill</strong> porque está associada a um ou mais perfis de talento ou propostas de trabalho.
-        Remova todas as associações primeiro.
+<dl class="row" style="max-width:400px;">
+    <dt class="col-sm-4">Nome</dt>
+    <dd class="col-sm-8">@Model.Nome</dd>
+    <dt class="col-sm-4">Área</dt>
+    <dd class="col-sm-8">@Model.AreaProfissional</dd>
+</dl>
+
+<form asp-action="Delete">
+    <input type="hidden" asp-for="IdSkill" />
+    <div class="d-flex gap-2">
+        <input type="submit" value="Confirmar Eliminação" class="btn btn-danger" />
+        <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
     </div>
-
-    <a asp-action="Index" class="btn btn-secondary">← Voltar à Lista</a>
-}
-else
-{
-    <div class="alert alert-danger">
-        Tem a certeza que quer eliminar esta skill?
-    </div>
-
-    <dl class="row w-50">
-        <dt class="col-sm-4">Nome</dt>
-        <dd class="col-sm-8">@Model.Nome</dd>
-
-        <dt class="col-sm-4">Área Profissional</dt>
-        <dd class="col-sm-8">@(Model.AreaProfissional ?? "—")</dd>
-    </dl>
-
-    <form asp-action="Delete" method="post">
-        @Html.AntiForgeryToken()
-        <input type="hidden" asp-for="IdSkill" />
-        <button type="submit" class="btn btn-danger">Eliminar</button>
-        <a asp-action="Index" class="btn btn-secondary ms-2">Cancelar</a>
-    </form>
-}
+</form>

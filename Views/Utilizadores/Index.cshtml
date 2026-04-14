@@ -1,65 +1,57 @@
-﻿@model IEnumerable<TalentosIT.Web.Models.Utilizador>
-
+@model IEnumerable<TalentosIT.Web.Models.Utilizador>
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Utilizadores";
 }
 
-<h1>Index</h1>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Gestão de Utilizadores</h1>
+    <a asp-action="Create" class="btn btn-primary">+ Novo Utilizador</a>
+</div>
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
+<table class="table table-striped">
     <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.PrimeiroNome)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Apelido)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Email)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Telefone)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.PalavraPasse)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Ativo)
-            </th>
-            <th></th>
-        </tr>
+    <tr>
+        <th>Nome</th>
+        <th>Email</th>
+        <th>Telefone</th>
+        <th>Tipo</th>
+        <th>Ativo</th>
+        <th></th>
+    </tr>
     </thead>
     <tbody>
-@foreach (var item in Model) {
+    @foreach (var item in Model)
+    {
         <tr>
+            <td>@item.PrimeiroNome @item.Apelido</td>
+            <td>@item.Email</td>
+            <td>@(item.Telefone ?? "—")</td>
             <td>
-                @Html.DisplayFor(modelItem => item.PrimeiroNome)
+                @{
+                    var badge = item.TipoUtilizador switch {
+                        TalentosIT.Web.Models.TipoUtilizador.Admin => ("Admin", "bg-danger"),
+                        TalentosIT.Web.Models.TipoUtilizador.GestorUtilizadores => ("Cliente", "bg-primary"),
+                        _ => ("Profissional", "bg-success")
+                    };
+                }
+                <span class="badge @badge.Item2">@badge.Item1</span>
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.Apelido)
+                @if (item.Ativo == true)
+                {
+                    <span class="badge bg-success">Ativo</span>
+                }
+                else
+                {
+                    <span class="badge bg-secondary">Inativo</span>
+                }
             </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Email)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Telefone)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.PalavraPasse)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Ativo)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.IdUtilizador">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.IdUtilizador">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.IdUtilizador">Delete</a>
+            <td style="white-space:nowrap;">
+                <a asp-action="Details" asp-route-id="@item.IdUtilizador" class="btn btn-sm btn-info">Detalhes</a>
+                <a asp-action="Edit" asp-route-id="@item.IdUtilizador" class="btn btn-sm btn-warning ms-1">Editar</a>
+                <a asp-action="Delete" asp-route-id="@item.IdUtilizador" class="btn btn-sm btn-danger ms-1">Eliminar</a>
             </td>
         </tr>
-}
+    }
     </tbody>
 </table>

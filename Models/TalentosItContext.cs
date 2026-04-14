@@ -38,12 +38,17 @@ public partial class TalentosItContext : DbContext
     public virtual DbSet<UtilizadoresAtivo> UtilizadoresAtivos { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseNpgsql("Host=localhost;Database=TalentosIT;Username=postgres;Password=8445");
+    {
+        if (!optionsBuilder.IsConfigured)
+        {
+            optionsBuilder.UseNpgsql("Host=localhost;Database=TalentosIT;Username=postgres;Password=8445");
+        }
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.HasPostgresEnum("tipo_utilizador", new[] { "utilizador", "gestor_utilizadores", "admin" });
+        // Register the postgres enum type
+        modelBuilder.HasPostgresEnum<TipoUtilizador>("tipo_utilizador");
 
         modelBuilder.Entity<Cliente>(entity =>
         {
@@ -319,6 +324,9 @@ public partial class TalentosItContext : DbContext
             entity.Property(e => e.PalavraPasse)
                 .HasMaxLength(255)
                 .HasColumnName("palavra_passe");
+            entity.Property(e => e.TipoUtilizador)
+                .HasColumnName("tipo_utilizador")
+                .HasDefaultValue(TipoUtilizador.Utilizador); // use the enum value, not a string
             entity.Property(e => e.PrimeiroNome)
                 .HasMaxLength(100)
                 .HasColumnName("primeiro_nome");

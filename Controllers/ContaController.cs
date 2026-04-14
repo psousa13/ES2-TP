@@ -29,6 +29,19 @@ public class ContaController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Register(RegisterViewModel model)
     {
+        // If registering as client, validate address fields
+        if (model.TipoUtilizador == "gestor_utilizadores")
+        {
+            if (string.IsNullOrWhiteSpace(model.Rua))
+                ModelState.AddModelError("Rua", "A rua é obrigatória para clientes.");
+            if (string.IsNullOrWhiteSpace(model.NumPorta))
+                ModelState.AddModelError("NumPorta", "O número de porta é obrigatório para clientes.");
+            if (string.IsNullOrWhiteSpace(model.Cidade))
+                ModelState.AddModelError("Cidade", "A cidade é obrigatória para clientes.");
+            if (string.IsNullOrWhiteSpace(model.Pais))
+                ModelState.AddModelError("Pais", "O país é obrigatório para clientes.");
+        }
+
         if (!ModelState.IsValid) return View(model);
 
         if (await _context.Utilizadors.AnyAsync(u => u.Email == model.Email))
@@ -37,6 +50,10 @@ public class ContaController : Controller
             return View(model);
         }
 
+        var tipo = model.TipoUtilizador == "gestor_utilizadores"
+            ? TipoUtilizador.GestorUtilizadores
+            : TipoUtilizador.Utilizador;
+
         var hasher = new PasswordHasher<Utilizador>();
         var utilizador = new Utilizador
         {
@@ -44,11 +61,31 @@ public class ContaController : Controller
             Apelido = model.Apelido,
             Email = model.Email,
             PalavraPasse = hasher.HashPassword(null!, model.PalavraPasse),
+            TipoUtilizador = tipo,
             Ativo = true
         };
 
         _context.Utilizadors.Add(utilizador);
         await _context.SaveChangesAsync();
+
+        // Auto-create Cliente record for GestorUtilizadores with full address
+        if (tipo == TipoUtilizador.GestorUtilizadores)
+        {
+            var cliente = new Cliente
+            {
+                IdUtilizador = utilizador.IdUtilizador,
+                PrimeiroNome = utilizador.PrimeiroNome,
+                Apelido = utilizador.Apelido,
+                Email = utilizador.Email,
+                Telefone = utilizador.Telefone,
+                Rua = model.Rua!,
+                NumPorta = model.NumPorta!,
+                Cidade = model.Cidade!,
+                Pais = model.Pais!
+            };
+            _context.Clientes.Add(cliente);
+            await _context.SaveChangesAsync();
+        }
 
         return RedirectToAction("Login", "Conta");
     }
@@ -67,19 +104,11 @@ public class ContaController : Controller
     {
         if (!ModelState.IsValid) return View(model);
 
-        var utilizador = await _context.Utilizadors
-            .FirstOrDefaultAsync(u => u.Email == model.Email);
+        var utilizador = await _context.Utilizadors.FirstOrDefaultAsync(u => u.Email == model.Email);
 
         if (utilizador == null)
         {
-            ModelState.AddModelError("", "Email ou palavra-passe incorretos.");
-            return View(model);
-        }
-
-        // FIX: check if account is active
-        if (utilizador.Ativo == false)
-        {
-            ModelState.AddModelError("", "Conta desativada. Contacte o administrador.");
+            ModelState.AddModelError("", "Email inválido.");
             return View(model);
         }
 
@@ -88,17 +117,15 @@ public class ContaController : Controller
 
         if (resultado == PasswordVerificationResult.Failed)
         {
-            // FIX: generic message to not reveal which field is wrong
-            ModelState.AddModelError("", "Email ou palavra-passe incorretos.");
+            ModelState.AddModelError("PalavraPasse", "Palavra passe incorreta.");
             return View(model);
         }
 
-        // FIX: use ClaimTypes.NameIdentifier consistently for IdUtilizador
         var claims = new List<Claim>
         {
             new(ClaimTypes.Name, utilizador.Email),
             new(ClaimTypes.NameIdentifier, utilizador.IdUtilizador.ToString()),
-            new("NomeCompleto", $"{utilizador.PrimeiroNome} {utilizador.Apelido}")
+            new(ClaimTypes.Role, utilizador.TipoUtilizador.ToString())
         };
 
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
