@@ -1,0 +1,120 @@
+@using TalentosIT.Web.Models
+@{
+    ViewData["Title"] = "Dashboard — Cliente";
+    var propostas = ViewData["Propostas"] as List<PropostaTrabalho> ?? new();
+    var matches = ViewData["PropostaMatches"] as Dictionary<int, List<Talento>> ?? new();
+}
+
+<div class="hero fade-up" style="padding: 2rem 0 1.5rem;">
+    <p class="section-label">Bem-vindo, Cliente</p>
+    <h1>Os seus projetos</h1>
+    <p>Talentos elegíveis para cada uma das suas propostas de trabalho.</p>
+</div>
+
+<div class="row g-3 mb-4 fade-up fade-up-2">
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-value">@propostas.Count</div>
+            <div class="stat-label">As minhas propostas</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-value">@ViewData["TotalTalentos"]</div>
+            <div class="stat-label">Talentos na plataforma</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-value">@ViewData["TotalSkills"]</div>
+            <div class="stat-label">Skills disponíveis</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-value">@matches.Values.Sum(v => v.Count)</div>
+            <div class="stat-label">Correspondências totais</div>
+        </div>
+    </div>
+</div>
+
+@if (!propostas.Any())
+{
+    <div class="alert alert-info fade-up">
+        <strong>Sem propostas.</strong> Ainda não publicou nenhuma proposta de trabalho.
+        <a asp-controller="PropostaTrabalho" asp-action="Create" class="btn btn-sm btn-primary ms-3">Criar Proposta</a>
+    </div>
+}
+else
+{
+    <h4 class="mb-3 fade-up">Talentos elegíveis por proposta</h4>
+    @foreach (var p in propostas)
+    {
+        var elegíveis = matches.GetValueOrDefault(p.IdProposta) ?? new();
+        <div class="card mb-4 fade-up border-0 shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>@p.Titulo</strong>
+                    <span class="text-muted ms-2 small">— @(p.IdClienteNavigation?.PrimeiroNome) @(p.IdClienteNavigation?.Apelido)</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge @(elegíveis.Any() ? "bg-success" : "bg-secondary")">
+                        @elegíveis.Count elegível(is)
+                    </span>
+                    <a asp-controller="PropostaTrabalho" asp-action="Details" asp-route-id="@p.IdProposta"
+                       class="btn btn-sm btn-outline-primary">Ver proposta</a>
+                </div>
+            </div>
+            @if (p.PropostaSkills.Any())
+            {
+                <div class="card-body pb-1 pt-2">
+                    <small class="text-muted">Skills exigidas: </small>
+                    @foreach (var ps in p.PropostaSkills)
+                    {
+                        <span class="badge bg-secondary me-1">@ps.IdSkillNavigation?.Nome (@ps.AnosMinimosExperiencia+ anos)</span>
+                    }
+                </div>
+            }
+            @if (elegíveis.Any())
+            {
+                <div class="card-body pt-2">
+                    <div class="row g-2">
+                        @foreach (var t in elegíveis.Take(6))
+                        {
+                            <div class="col-md-4">
+                                <div class="d-flex align-items-center gap-2 p-2 rounded" style="background:rgba(0,0,0,0.03)">
+                                    <div>
+                                        <div class="fw-semibold small">@t.PrimeiroNome @t.Apelido</div>
+                                        <div class="text-muted" style="font-size:0.75rem">
+                                            @t.Categoria &nbsp;|&nbsp;
+                                            @(t.PrecoHora.HasValue ? t.PrecoHora.Value.ToString("F2") + " €/h" : "—")
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        @if (elegíveis.Count > 6)
+                        {
+                            <div class="col-12">
+                                <small class="text-muted">... e mais @(elegíveis.Count - 6) talento(s).</small>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="card-body pt-2">
+                    <small class="text-muted">Nenhum talento público corresponde aos requisitos desta proposta ainda.</small>
+                </div>
+            }
+        </div>
+    }
+}
+
+<div class="mt-4 fade-up">
+    <div class="d-flex gap-2 flex-wrap">
+        <a asp-controller="PropostaTrabalho" asp-action="Create" class="btn btn-primary">Nova Proposta</a>
+        <a asp-controller="PropostaTrabalho" asp-action="Index" class="btn btn-outline-secondary">Todas as Propostas</a>
+    </div>
+</div>

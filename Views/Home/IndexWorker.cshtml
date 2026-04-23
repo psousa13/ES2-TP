@@ -1,0 +1,109 @@
+@using TalentosIT.Web.Models
+@{
+    ViewData["Title"] = "Dashboard — Profissional";
+    var matchingPropostas = ViewData["MatchingPropostas"] as List<PropostaTrabalho> ?? new();
+    var hasTalento = (bool)(ViewData["HasTalento"] ?? false);
+    var talentoId = ViewData["TalentoId"] as int?;
+}
+
+<div class="hero fade-up" style="padding: 2rem 0 1.5rem;">
+    <p class="section-label">Bem-vindo, Profissional</p>
+    <h1>As suas oportunidades</h1>
+    <p>Propostas de trabalho que correspondem ao seu perfil de skills.</p>
+</div>
+
+<div class="row g-3 mb-4 fade-up fade-up-2">
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-value">@ViewData["TotalTalentos"]</div>
+            <div class="stat-label">Talentos</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-value">@ViewData["TotalSkills"]</div>
+            <div class="stat-label">Skills</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-value">@ViewData["TotalPropostas"]</div>
+            <div class="stat-label">Propostas Ativas</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-value">@matchingPropostas.Count</div>
+            <div class="stat-label">Correspondências</div>
+        </div>
+    </div>
+</div>
+
+@if (!hasTalento)
+{
+    <div class="alert alert-warning fade-up">
+        <strong>Perfil incompleto.</strong> Ainda não tem um perfil de talento criado.
+        <a asp-controller="Talentos" asp-action="Create" class="btn btn-sm btn-primary ms-3">Criar Perfil Agora</a>
+    </div>
+}
+else if (!matchingPropostas.Any())
+{
+    <div class="alert alert-info fade-up">
+        <strong>Sem correspondências ainda.</strong> Nenhuma proposta de trabalho corresponde às suas skills atuais.
+        <a asp-controller="Talentos" asp-action="Details" asp-route-id="@talentoId" class="btn btn-sm btn-outline-primary ms-3">Ver o meu perfil</a>
+    </div>
+}
+else
+{
+    <h4 class="mb-3 fade-up">Propostas que correspondem ao seu perfil</h4>
+    <div class="row g-4 fade-up">
+        @foreach (var p in matchingPropostas)
+        {
+            <div class="col-md-6">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title mb-0">@p.Titulo</h5>
+                            <span class="badge bg-success">Match</span>
+                        </div>
+                        <p class="text-muted small mb-1">
+                            🏢 @(p.IdClienteNavigation?.PrimeiroNome) @(p.IdClienteNavigation?.Apelido)
+                        </p>
+                        <p class="text-muted small mb-2">📂 @p.Categoria &nbsp;|&nbsp; ⏱ @p.HorasTotais h</p>
+                        @if (p.PropostaSkills.Any())
+                        {
+                            <div class="mb-2">
+                                @foreach (var ps in p.PropostaSkills)
+                                {
+                                    <span class="badge bg-secondary me-1">@ps.IdSkillNavigation?.Nome (@ps.AnosMinimosExperiencia+ anos)</span>
+                                }
+                            </div>
+                        }
+                        @if (!string.IsNullOrEmpty(p.Descricao))
+                        {
+                            <p class="card-text small text-muted">@p.Descricao</p>
+                        }
+                        <a asp-controller="PropostaTrabalho" asp-action="Details" asp-route-id="@p.IdProposta"
+                           class="btn btn-sm btn-outline-primary mt-2">Ver detalhes</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+<div class="mt-5 fade-up">
+    <h5 class="mb-3">Ações rápidas</h5>
+    <div class="d-flex gap-2 flex-wrap">
+        @if (talentoId.HasValue)
+        {
+            <a asp-controller="Talentos" asp-action="Details" asp-route-id="@talentoId" class="btn btn-outline-primary">Ver o meu perfil</a>
+            <a asp-controller="TalentoSkills" asp-action="Gerir" asp-route-id="@talentoId" class="btn btn-outline-secondary">Gerir Skills</a>
+        }
+        else
+        {
+            <a asp-controller="Talentos" asp-action="Create" class="btn btn-primary">Criar Perfil</a>
+        }
+        <a asp-controller="PropostaTrabalho" asp-action="Index" class="btn btn-outline-secondary">Ver todas as propostas</a>
+    </div>
+</div>
