@@ -277,6 +277,29 @@ namespace TalentosIT.Web.Controllers
             return RedirectToAction(nameof(Details), new { id });
         }
 
+        // GET: Talentos/Buscar
+        public async Task<IActionResult> Buscar(HashSet<int>? idSkills)
+        {
+            ViewBag.Skills = new SelectList(await _context.Skills.ToListAsync(), "IdSkill", "Nome");
+
+            if (idSkills == null || idSkills.Count == 0)
+            {
+                TempData["Aviso"] = "Por favor seleciona uma Skill.";
+                return View(new List<Talento>());
+            }
+
+            var results = await _context.Talentos
+                .Where(t => t.Publico == true && _context.TalentoSkills
+                    .Where(ts => ts.IdTalento == t.IdTalento && idSkills.Contains(ts.IdSkill))
+                    .Select(ts => ts.IdSkill)
+                    .Distinct()
+                    .Count() == idSkills.Count)
+                .Include(t => t.IdUtilizadorNavigation)
+                .ToListAsync();
+
+            return View(results);
+        }
+
         // ---------------------------------------------------------------
         // Helper
         // ---------------------------------------------------------------
