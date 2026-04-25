@@ -295,6 +295,7 @@ namespace TalentosIT.Web.Controllers
                     .Distinct()
                     .Count() == idSkills.Count)
                 .Include(t => t.IdUtilizadorNavigation)
+                .OrderBy(t => t.IdUtilizador)
                 .ToListAsync();
 
             return View(results);
