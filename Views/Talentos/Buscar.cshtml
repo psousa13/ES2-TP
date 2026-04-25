@@ -16,7 +16,7 @@
 <form asp-controller="Talentos" asp-action="Buscar" method="get" class="row g-3 align-items-end w-75">
     @Html.AntiForgeryToken()
     <div class="col-md-5">
-        <select name="idSkills" class="form-select" multiple size="8">
+        <select name="idSkills" class="form-select" multiple>
             @if (skills != null)
             {
                 foreach (var item in skills)
@@ -47,6 +47,7 @@
                 <th>Email</th>
                 <th>Categoria</th>
                 <th>Preço/Hora</th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
@@ -57,6 +58,9 @@
                     <td>@item.IdUtilizadorNavigation?.Email</td>
                     <td>@(item.Categoria ?? "-")</td>
                     <td>@(item.PrecoHora.HasValue ? item.PrecoHora.Value.ToString("F2") + " €/h" : "-")</td>
+                    <td style="white-space: nowrap;">
+                        <a asp-action="Details" asp-route-id="@item.IdTalento" class="btn btn-sm btn-info">Detalhes</a>
+                    </td>
                 </tr>
             }
         </tbody>
