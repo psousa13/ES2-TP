@@ -38,7 +38,7 @@ namespace TalentosIT.Web.Controllers
                 var propostas = await _context.PropostaTrabalhos
                     .Include(p => p.IdClienteNavigation)
                     .Include(p => p.PropostaSkills)
-                        .ThenInclude(ps => ps.IdSkillNavigation)
+                    .ThenInclude(ps => ps.IdSkillNavigation)
                     .ToListAsync();
                 return View("IndexWorker", propostas);
             }
@@ -51,7 +51,7 @@ namespace TalentosIT.Web.Controllers
                 .Include(p => p.IdClienteNavigation)
                 .Include(p => p.IdUtilizadorNavigation)
                 .Include(p => p.PropostaSkills)
-                    .ThenInclude(ps => ps.IdSkillNavigation)
+                .ThenInclude(ps => ps.IdSkillNavigation)
                 .FirstOrDefaultAsync(m => m.IdProposta == id);
             if (proposta == null) return NotFound();
             return View(proposta);
@@ -68,13 +68,16 @@ namespace TalentosIT.Web.Controllers
                 ViewData["IdCliente"] = new SelectList(clientes, "IdCliente", "Nome");
                 ViewData["ShowClientePicker"] = true;
             }
+
             return View();
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "GestorUtilizadores,Admin")]
-        public async Task<IActionResult> Create([Bind("IdCliente,Titulo,Categoria,HorasTotais,Descricao")] PropostaTrabalho proposta)
+        public async Task<IActionResult> Create(
+            [Bind("IdCliente,Titulo,Categoria,HorasTotais,Descricao")]
+            PropostaTrabalho proposta)
         {
             ModelState.Remove("IdUtilizadorNavigation");
             ModelState.Remove("IdClienteNavigation");
@@ -87,9 +90,11 @@ namespace TalentosIT.Web.Controllers
                 var cliente = await _context.Clientes.FirstOrDefaultAsync(c => c.IdUtilizador == userId);
                 if (cliente == null)
                 {
-                    ModelState.AddModelError("", "Perfil de cliente não encontrado. Por favor contacte o administrador.");
+                    ModelState.AddModelError("",
+                        "Perfil de cliente não encontrado. Por favor contacte o administrador.");
                     return View(proposta);
                 }
+
                 proposta.IdCliente = cliente.IdCliente;
                 ModelState.Remove("IdCliente");
             }
@@ -110,6 +115,7 @@ namespace TalentosIT.Web.Controllers
                 ViewData["IdCliente"] = new SelectList(clientes, "IdCliente", "Nome", proposta.IdCliente);
                 ViewData["ShowClientePicker"] = true;
             }
+
             return View(proposta);
         }
 
@@ -133,7 +139,9 @@ namespace TalentosIT.Web.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "GestorUtilizadores,Admin")]
-        public async Task<IActionResult> Edit(int id, [Bind("IdProposta,IdUtilizador,IdCliente,Titulo,Categoria,HorasTotais,Descricao")] PropostaTrabalho proposta)
+        public async Task<IActionResult> Edit(int id,
+            [Bind("IdProposta,IdUtilizador,IdCliente,Titulo,Categoria,HorasTotais,Descricao")]
+            PropostaTrabalho proposta)
         {
             if (id != proposta.IdProposta) return NotFound();
             if (!IsAdmin() && proposta.IdUtilizador != GetUserId()) return Forbid();
@@ -154,6 +162,7 @@ namespace TalentosIT.Web.Controllers
                     if (!_context.PropostaTrabalhos.Any(e => e.IdProposta == proposta.IdProposta)) return NotFound();
                     throw;
                 }
+
                 return RedirectToAction(nameof(Index));
             }
 
@@ -190,5 +199,51 @@ namespace TalentosIT.Web.Controllers
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
+
+
+        // GET: PropostaTrabalho/Elegiveis/5
+        public async Task<IActionResult> Elegiveis(int? id)
+        {
+            if (id == null) return NotFound();
+
+            var proposta = await _context.PropostaTrabalhos
+                .Include(p => p.PropostaSkills)
+                .ThenInclude(ps => ps.IdSkillNavigation)
+                .Include(p => p.IdClienteNavigation)
+                .FirstOrDefaultAsync(p => p.IdProposta == id);
+
+            if (proposta == null) return NotFound();
+
+            var skillsExigidas = proposta.PropostaSkills.ToList();
+            if (!skillsExigidas.Any())
+            {
+                ViewData["Proposta"] = proposta;
+                ViewData["Aviso"] =
+                    "Esta proposta não tem skills exigidas definidas. Adicione skills antes de procurar talentos elegíveis.";
+                return View(new List<Talento>());
+            }
+
+            var todosTalentos = await _context.Talentos
+                .Where(t => t.Publico == true)
+                .Include(t => t.TalentoSkills)
+                .ThenInclude(ts => ts.IdSkillNavigation)
+                .ToListAsync();
+
+            var talentosElegiveis = todosTalentos
+                .Where(talento => skillsExigidas.All(skillExigida =>
+                    talento.TalentoSkills.Any(ts =>
+                        ts.IdSkill == skillExigida.IdSkill &&
+                        ts.AnosExperiencia >= skillExigida.AnosMinimosExperiencia
+                    )
+                ))
+                .OrderBy(t => t.PrecoHora * (proposta.HorasTotais ?? 0))
+                .ThenBy(t => t.PrimeiroNome)
+                .ThenBy(t => t.Apelido)
+                .ToList();
+
+            ViewData["Proposta"] = proposta;
+            return View(talentosElegiveis);
+        }
     }
 }
+

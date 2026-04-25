@@ -74,5 +74,6 @@ else
 <div class="mt-4">
     <a asp-action="Edit" asp-route-id="@Model.IdProposta" class="btn btn-warning">Editar</a>
     <a asp-controller="PropostaSkills" asp-action="Gerir" asp-route-id="@Model.IdProposta" class="btn btn-primary ms-2">Gerir Skills Exigidas</a>
+    <a asp-action="Elegiveis" asp-route-id="@Model?.IdProposta" class="btn btn-warning ms-2">Ver Talentos Elegíveis</a>
     <a asp-action="Index" class="btn btn-secondary ms-2">← Voltar à Lista</a>
 </div>

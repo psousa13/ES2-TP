@@ -1,0 +1,76 @@
+﻿@model IEnumerable<TalentosIT.Web.Models.Talento>
+
+@{
+    var proposta = (TalentosIT.Web.Models.PropostaTrabalho)ViewData["Proposta"]!;
+    ViewData["Title"] = $"Talentos Elegíveis — {proposta.Titulo}";
+}
+
+<h2>Talentos Elegíveis</h2>
+<h5 class="text-muted mb-1">@proposta.Titulo</h5>
+<p class="text-muted mb-4">Cliente: @proposta.IdClienteNavigation?.PrimeiroNome @proposta.IdClienteNavigation?.Apelido</p>
+
+@if (ViewData["Aviso"] != null)
+{
+    <div class="alert alert-warning">@ViewData["Aviso"]</div>
+}
+
+<div class="mb-4">
+    <h6 class="fw-bold">Skills exigidas por esta proposta:</h6>
+    <ul>
+        @foreach (var ps in proposta.PropostaSkills.OrderBy(ps => ps.IdSkillNavigation?.Nome))
+        {
+            <li>@ps.IdSkillNavigation?.Nome — mínimo @ps.AnosMinimosExperiencia ano(s) de experiência</li>
+        }
+    </ul>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">
+        Nenhum talento elegível encontrado para esta proposta.
+    </div>
+}
+else
+{
+    <p class="text-success fw-bold">@Model.Count() talento(s) elegível(eis) encontrado(s), ordenados por custo total estimado.</p>
+
+    <table class="table table-bordered">
+        <thead class="table-light">
+            <tr>
+                <th>Nome</th>
+                <th>Email</th>
+                <th>Categoria</th>
+                <th>País</th>
+                <th>Preço/Hora</th>
+                <th>Custo Total Estimado</th>
+                <th>Skills</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var talento in Model)
+            {
+                var custoTotal = talento.PrecoHora * (proposta.HorasTotais ?? 0);
+                <tr>
+                    <td>@talento.PrimeiroNome @talento.Apelido</td>
+                    <td>@talento.Email</td>
+                    <td>@talento.Categoria</td>
+                    <td>@talento.Pais</td>
+                    <td>@talento.PrecoHora?.ToString("F2") €/h</td>
+                    <td class="fw-bold">@custoTotal?.ToString("F2") €</td>
+                    <td>
+                        @foreach (var ts in talento.TalentoSkills.OrderBy(ts => ts.IdSkillNavigation?.Nome))
+                        {
+                            <span class="badge bg-secondary me-1">
+                                @ts.IdSkillNavigation?.Nome (@ts.AnosExperiencia anos)
+                            </span>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<div class="mt-4">
+    <a asp-action="Details" asp-route-id="@proposta.IdProposta" class="btn btn-secondary">← Voltar à Proposta</a>
+</div>
