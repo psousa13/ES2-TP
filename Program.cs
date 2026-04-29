@@ -1,9 +1,9 @@
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using TalentosIT.Web.Models;
 using TalentosIT.Web.Services;
-using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +20,8 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 
 builder.Services.AddScoped<UtilizadoresService>();
 builder.Services.AddScoped<TalentosService>();
+builder.Services.AddScoped<SkillsService>();
+builder.Services.AddScoped<ClientesService>();
 
 var app = builder.Build();
 

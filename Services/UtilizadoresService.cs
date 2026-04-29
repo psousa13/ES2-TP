@@ -1,6 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.Blazor;
 using TalentosIT.Web.DTO;
 using TalentosIT.Web.Models;
 using Microsoft.AspNetCore.Identity;
