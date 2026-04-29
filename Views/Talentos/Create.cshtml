@@ -1,4 +1,4 @@
-@model TalentosIT.Web.Models.Talento
+@model TalentosIT.Web.DTO.CreateTalentoDTO
 @using Microsoft.AspNetCore.Mvc.Rendering
 
 @{
@@ -32,7 +32,7 @@
             </div>
 
             <div class="mb-3 form-check">
-                <input type="checkbox" name="Publico" id="Publico" class="form-check-input" value="true" />
+                <input type="checkbox" asp-for="Publico" class="form-check-input" />
                 <label for="Publico" class="form-check-label">Perfil Público</label>
                 <div class="form-text text-muted">Se marcado, o perfil será visível para todos os utilizadores.</div>
             </div>
@@ -69,14 +69,6 @@
             const id = select.value;
             document.getElementById('nomeDisplay').value = utilizadores[id] || '';
         }
-
-        new TomSelect('#selectUtilizador', {
-            placeholder: 'Pesquisar por email...',
-            allowEmptyOption: true,
-            onChange: function(value) {
-                document.getElementById('nomeDisplay').value = utilizadores[value] || '';
-            }
-        });
     </script>
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 }

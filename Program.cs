@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Npgsql;
 using TalentosIT.Web.Models;
+using TalentosIT.Web.Services;
+using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,15 +12,14 @@ var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
 dataSourceBuilder.MapEnum<TipoUtilizador>("tipo_utilizador");
 var dataSource = dataSourceBuilder.Build();
 
-builder.Services.AddDbContext<TalentosIT.Web.Models.TalentosItContext>(options =>
-    options.UseNpgsql(dataSource));
+builder.Services.AddDbContext<TalentosIT.Web.Models.TalentosItContext>(options => options.UseNpgsql(dataSource));
 
 builder.Services.AddControllersWithViews();
 
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(options =>
-{
-    options.LoginPath = "/Login";
-});
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(options => options.LoginPath = "/Login");
+
+builder.Services.AddScoped<UtilizadoresService>();
+builder.Services.AddScoped<TalentosService>();
 
 var app = builder.Build();
 

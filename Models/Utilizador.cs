@@ -19,7 +19,7 @@ public partial class Utilizador
 
     public TipoUtilizador TipoUtilizador { get; set; } = TipoUtilizador.Utilizador;
 
-    public bool? Ativo { get; set; }
+    public bool Ativo { get; set; }
 
     public virtual ICollection<Cliente> Clientes { get; set; } = new List<Cliente>();
 
