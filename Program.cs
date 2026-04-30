@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using TalentosIT.Web.Models;
 using TalentosIT.Web.Services;
+using TalentosIT.Web.Services.Matching;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,6 +25,10 @@ builder.Services.AddScoped<SkillsService>();
 builder.Services.AddScoped<ClientesService>();
 builder.Services.AddScoped<PropostaTrabalhoService>();
 builder.Services.AddScoped<IContaService, ContaService>();
+
+builder.Services.AddScoped<IMatchingRule, SkillMatchingRule>();
+builder.Services.AddScoped<IMatchingRule, ExperienceMatchingRule>();
+builder.Services.AddScoped<MatchingEngine>();
 
 var app = builder.Build();
 

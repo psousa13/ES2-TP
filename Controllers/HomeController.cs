@@ -3,6 +3,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TalentosIT.Web.Models;
+using TalentosIT.Web.Services.Matching;
 
 namespace TalentosIT.Web.Controllers
 {
@@ -10,11 +11,16 @@ namespace TalentosIT.Web.Controllers
     {
         private readonly ILogger<HomeController> _logger;
         private readonly TalentosItContext _context;
+        private readonly MatchingEngine _matchingEngine;
 
-        public HomeController(ILogger<HomeController> logger, TalentosItContext context)
+        public HomeController(
+            ILogger<HomeController> logger,
+            TalentosItContext context,
+            MatchingEngine matchingEngine)
         {
             _logger = logger;
             _context = context;
+            _matchingEngine = matchingEngine;
         }
 
         public async Task<IActionResult> Index()
@@ -29,7 +35,9 @@ namespace TalentosIT.Web.Controllers
                 return View();
 
             var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userIdStr == null) return View();
+            if (userIdStr == null)
+                return View();
+
             var userId = int.Parse(userIdStr);
 
             // WORKER: show job offers matching their skills
@@ -42,23 +50,16 @@ namespace TalentosIT.Web.Controllers
 
                 if (talento != null)
                 {
-                    var mySkillIds = talento.TalentoSkills.Select(ts => ts.IdSkill).ToHashSet();
-                    var mySkillYears = talento.TalentoSkills.ToDictionary(ts => ts.IdSkill, ts => ts.AnosExperiencia);
-
-                    // Find propostas where worker meets ALL required skills with enough years
+                    // Find propostas where worker meets all matching rules
                     var allPropostas = await _context.PropostaTrabalhos
                         .Include(p => p.IdClienteNavigation)
                         .Include(p => p.PropostaSkills)
                             .ThenInclude(ps => ps.IdSkillNavigation)
                         .ToListAsync();
 
-                    var matchingPropostas = allPropostas.Where(p =>
-                        p.PropostaSkills.Any() &&
-                        p.PropostaSkills.All(ps =>
-                            mySkillIds.Contains(ps.IdSkill) &&
-                            mySkillYears.GetValueOrDefault(ps.IdSkill) >= ps.AnosMinimosExperiencia
-                        )
-                    ).ToList();
+                    var matchingPropostas = allPropostas
+                        .Where(proposta => _matchingEngine.IsMatch(talento, proposta))
+                        .ToList();
 
                     ViewData["MatchingPropostas"] = matchingPropostas;
                     ViewData["TalentoId"] = talento.IdTalento;
@@ -88,21 +89,20 @@ namespace TalentosIT.Web.Controllers
                     .ToListAsync();
 
                 var propostaMatches = new Dictionary<int, List<Talento>>();
-                foreach (var p in propostas)
+
+                foreach (var proposta in propostas)
                 {
-                    var elegíveis = allTalentos.Where(t =>
-                        p.PropostaSkills.Any() &&
-                        p.PropostaSkills.All(ps =>
-                        {
-                            var ts = t.TalentoSkills.FirstOrDefault(x => x.IdSkill == ps.IdSkill);
-                            return ts != null && ts.AnosExperiencia >= ps.AnosMinimosExperiencia;
-                        })
-                    ).OrderBy(t => t.PrecoHora).ToList();
-                    propostaMatches[p.IdProposta] = elegíveis;
+                    var elegiveis = allTalentos
+                        .Where(talento => _matchingEngine.IsMatch(talento, proposta))
+                        .OrderBy(talento => talento.PrecoHora)
+                        .ToList();
+
+                    propostaMatches[proposta.IdProposta] = elegiveis;
                 }
 
                 ViewData["PropostaMatches"] = propostaMatches;
                 ViewData["Propostas"] = propostas;
+
                 return View("IndexClient");
             }
 
