@@ -33,11 +33,12 @@ namespace TalentosIT.Web.Controllers
         public async Task<IActionResult> Details(int? id)
         {
             var proposta = await _service.GetProposta(id);
-            if (proposta == null) return NotFound();
-            if (!IsAdmin() && proposta.IdUtilizador != GetUserId()) return Forbid();
+
+            if (proposta == null)
+                return NotFound();
+
             return View(proposta);
         }
-
         [Authorize(Roles = "GestorUtilizadores,Admin")]
         public async Task<IActionResult> Create()
         {
