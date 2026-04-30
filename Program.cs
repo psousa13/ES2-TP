@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Npgsql;
 using TalentosIT.Web.Models;
+using TalentosIT.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +13,9 @@ var dataSource = dataSourceBuilder.Build();
 
 builder.Services.AddDbContext<TalentosIT.Web.Models.TalentosItContext>(options =>
     options.UseNpgsql(dataSource));
+
+// DIP: Registar a interface IContaService com a sua implementação concreta ContaService
+builder.Services.AddScoped<IContaService, ContaService>();
 
 builder.Services.AddControllersWithViews();
 

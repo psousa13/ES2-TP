@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using TalentosIT.Web.Models;
+using TalentosIT.Web.Services;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
@@ -10,11 +10,11 @@ namespace TalentosIT.Web.Controllers;
 
 public class ContaController : Controller
 {
-    private readonly TalentosItContext _context;
+    private readonly IContaService _contaService;
 
-    public ContaController(TalentosItContext context)
+    public ContaController(IContaService contaService)
     {
-        _context = context;
+        _contaService = contaService;
     }
 
     [HttpGet]
@@ -44,7 +44,7 @@ public class ContaController : Controller
 
         if (!ModelState.IsValid) return View(model);
 
-        if (await _context.Utilizadors.AnyAsync(u => u.Email == model.Email))
+        if (await _contaService.EmailExisteAsync(model.Email))
         {
             ModelState.AddModelError("Email", "Email já registado.");
             return View(model);
@@ -65,8 +65,7 @@ public class ContaController : Controller
             Ativo = true
         };
 
-        _context.Utilizadors.Add(utilizador);
-        await _context.SaveChangesAsync();
+        await _contaService.RegistarUtilizadorAsync(utilizador);
 
         // Auto-create Cliente record for GestorUtilizadores with full address
         if (tipo == TipoUtilizador.GestorUtilizadores)
@@ -83,8 +82,7 @@ public class ContaController : Controller
                 Cidade = model.Cidade!,
                 Pais = model.Pais!
             };
-            _context.Clientes.Add(cliente);
-            await _context.SaveChangesAsync();
+            await _contaService.CriarClienteAsync(cliente);
         }
 
         return RedirectToAction("Login", "Conta");
@@ -104,7 +102,7 @@ public class ContaController : Controller
     {
         if (!ModelState.IsValid) return View(model);
 
-        var utilizador = await _context.Utilizadors.FirstOrDefaultAsync(u => u.Email == model.Email);
+        var utilizador = await _contaService.ObterUtilizadorPorEmailAsync(model.Email);
 
         if (utilizador == null)
         {
