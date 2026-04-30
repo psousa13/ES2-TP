@@ -6,6 +6,7 @@ using TalentosIT.Web.DTO;
 using TalentosIT.Web.Exceptions;
 using TalentosIT.Web.Models;
 using TalentosIT.Web.Services;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace TalentosIT.Web.Controllers
 {
@@ -82,6 +83,12 @@ namespace TalentosIT.Web.Controllers
             }
             catch (NotFoundException)
             {
+                if (IsAdmin())
+            {
+                var clientes = await _service.GetClientes(GetUserId(), IsAdmin());
+                ViewData["IdCliente"] = new SelectList(clientes, "IdCliente", "Nome");
+                ViewData["ShowClientePicker"] = true;
+            }
                 return NotFound();
             }
             catch (NoPermissionException)

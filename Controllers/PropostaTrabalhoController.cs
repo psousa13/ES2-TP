@@ -3,18 +3,21 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using TalentosIT.Web.DTO;
+using TalentosIT.Web.Exceptions;
 using TalentosIT.Web.Models;
+using TalentosIT.Web.Services;
 
 namespace TalentosIT.Web.Controllers
 {
     [Authorize]
     public class PropostaTrabalhoController : Controller
     {
-        private readonly TalentosItContext _context;
+        private readonly PropostaTrabalhoService _service;
 
-        public PropostaTrabalhoController(TalentosItContext context)
+        public PropostaTrabalhoController(PropostaTrabalhoService service)
         {
-            _context = context;
+            _service = service;
         }
 
         private int GetUserId() => int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
@@ -23,165 +26,108 @@ namespace TalentosIT.Web.Controllers
 
         public async Task<IActionResult> Index()
         {
-            if (IsClient())
-            {
-                var propostas = IsAdmin()
-                    ? await _context.PropostaTrabalhos.Include(p => p.IdClienteNavigation).ToListAsync()
-                    : await _context.PropostaTrabalhos
-                        .Where(p => p.IdUtilizador == GetUserId())
-                        .Include(p => p.IdClienteNavigation)
-                        .ToListAsync();
-                return View(propostas);
-            }
-            else
-            {
-                var propostas = await _context.PropostaTrabalhos
-                    .Include(p => p.IdClienteNavigation)
-                    .Include(p => p.PropostaSkills)
-                    .ThenInclude(ps => ps.IdSkillNavigation)
-                    .ToListAsync();
-                return View("IndexWorker", propostas);
-            }
+            if (IsClient()) return View(await _service.GetPropostasCliente(GetUserId(), IsAdmin()));
+            return View("IndexWorker", await _service.GetPropostas());
         }
 
         public async Task<IActionResult> Details(int? id)
         {
-            if (id == null) return NotFound();
-            var proposta = await _context.PropostaTrabalhos
-                .Include(p => p.IdClienteNavigation)
-                .Include(p => p.IdUtilizadorNavigation)
-                .Include(p => p.PropostaSkills)
-                .ThenInclude(ps => ps.IdSkillNavigation)
-                .FirstOrDefaultAsync(m => m.IdProposta == id);
+            var proposta = await _service.GetProposta(id);
             if (proposta == null) return NotFound();
+            if (!IsAdmin() && proposta.IdUtilizador != GetUserId()) return Forbid();
             return View(proposta);
         }
 
         [Authorize(Roles = "GestorUtilizadores,Admin")]
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            if (IsAdmin())
-            {
-                var clientes = _context.Clientes
-                    .Select(c => new { c.IdCliente, Nome = c.PrimeiroNome + " " + c.Apelido })
-                    .ToList();
-                ViewData["IdCliente"] = new SelectList(clientes, "IdCliente", "Nome");
-                ViewData["ShowClientePicker"] = true;
-            }
+            if (!IsAdmin()) return View();
 
+            var clientes = await _service.GetClientes(GetUserId(), IsAdmin());
+            ViewData["IdCliente"] = new SelectList(clientes, "IdCliente", "Nome");
+            ViewData["ShowClientePicker"] = true;
             return View();
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "GestorUtilizadores,Admin")]
-        public async Task<IActionResult> Create(
-            [Bind("IdCliente,Titulo,Categoria,HorasTotais,Descricao")]
-            PropostaTrabalho proposta)
+        public async Task<IActionResult> Create([Bind("IdCliente,Titulo,Categoria,HorasTotais,Descricao")] CreatePropostaDTO dto)
         {
-            ModelState.Remove("IdUtilizadorNavigation");
-            ModelState.Remove("IdClienteNavigation");
-            ModelState.Remove("IdUtilizador");
-            ModelState.Remove("PropostaSkills");
-
-            if (!IsAdmin())
+            try
             {
-                var userId = GetUserId();
-                var cliente = await _context.Clientes.FirstOrDefaultAsync(c => c.IdUtilizador == userId);
-                if (cliente == null)
-                {
-                    ModelState.AddModelError("",
-                        "Perfil de cliente não encontrado. Por favor contacte o administrador.");
-                    return View(proposta);
-                }
-
-                proposta.IdCliente = cliente.IdCliente;
-                ModelState.Remove("IdCliente");
-            }
-
-            if (ModelState.IsValid)
-            {
-                proposta.IdUtilizador = GetUserId();
-                _context.Add(proposta);
-                await _context.SaveChangesAsync();
+                await _service.Criar(dto, GetUserId(), IsAdmin());
                 return RedirectToAction(nameof(Index));
             }
-
-            if (IsAdmin())
+            catch (NotFoundException)
             {
-                var clientes = _context.Clientes
-                    .Select(c => new { c.IdCliente, Nome = c.PrimeiroNome + " " + c.Apelido })
-                    .ToList();
-                ViewData["IdCliente"] = new SelectList(clientes, "IdCliente", "Nome", proposta.IdCliente);
-                ViewData["ShowClientePicker"] = true;
+                ModelState.AddModelError("", "Perfil de cliente não encontrado. Por favor contacte o administrador.");
+                return View(dto);
             }
-
-            return View(proposta);
         }
 
         [Authorize(Roles = "GestorUtilizadores,Admin")]
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null) return NotFound();
-            var proposta = await _context.PropostaTrabalhos.FindAsync(id);
+            var proposta = await _service.GetProposta(id);
             if (proposta == null) return NotFound();
-            if (!IsAdmin() && proposta.IdUtilizador != GetUserId()) return Forbid();
 
-            var userId = GetUserId();
-            var clientes = _context.Clientes
-                .Where(c => IsAdmin() || c.IdUtilizador == userId)
-                .Select(c => new { c.IdCliente, Nome = c.PrimeiroNome + " " + c.Apelido })
-                .ToList();
+            if (!IsAdmin() && proposta.IdUtilizador != GetUserId()) return Forbid();
+            var clientes = await _service.GetClientes(GetUserId(), IsAdmin());
             ViewData["IdCliente"] = new SelectList(clientes, "IdCliente", "Nome", proposta.IdCliente);
-            return View(proposta);
+
+            EditPropostaDTO dto = new()
+            {
+                IdProposta = proposta.IdProposta,
+                IdUtilizador = proposta.IdUtilizador,
+                IdCliente = proposta.IdCliente,
+                Titulo = proposta.Titulo,
+                Categoria = proposta.Categoria,
+                HorasTotais = proposta.HorasTotais,
+                Descricao = proposta.Descricao
+            };
+
+            return View(dto);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "GestorUtilizadores,Admin")]
-        public async Task<IActionResult> Edit(int id,
-            [Bind("IdProposta,IdUtilizador,IdCliente,Titulo,Categoria,HorasTotais,Descricao")]
-            PropostaTrabalho proposta)
+        public async Task<IActionResult> Edit(
+            int id,
+            [Bind("IdProposta,IdUtilizador,IdCliente,Titulo,Categoria,HorasTotais,Descricao")] EditPropostaDTO dto)
         {
-            if (id != proposta.IdProposta) return NotFound();
-            if (!IsAdmin() && proposta.IdUtilizador != GetUserId()) return Forbid();
-
-            ModelState.Remove("IdUtilizadorNavigation");
-            ModelState.Remove("IdClienteNavigation");
-            ModelState.Remove("PropostaSkills");
-
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                try
-                {
-                    _context.Update(proposta);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!_context.PropostaTrabalhos.Any(e => e.IdProposta == proposta.IdProposta)) return NotFound();
-                    throw;
-                }
-
-                return RedirectToAction(nameof(Index));
+                var clientes = await _service.GetClientes(GetUserId(), IsAdmin());
+                ViewData["IdCliente"] = new SelectList(clientes, "IdCliente", "Nome", dto.IdCliente);
+                return View(dto);
             }
 
-            var userId = GetUserId();
-            var clientes = _context.Clientes
-                .Where(c => IsAdmin() || c.IdUtilizador == userId)
-                .Select(c => new { c.IdCliente, Nome = c.PrimeiroNome + " " + c.Apelido })
-                .ToList();
-            ViewData["IdCliente"] = new SelectList(clientes, "IdCliente", "Nome", proposta.IdCliente);
-            return View(proposta);
+            try
+            {
+                await _service.Editar(id, dto, GetUserId(), IsAdmin());
+                return RedirectToAction(nameof(Index));
+            }
+            catch (NotFoundException)
+            {
+                return NotFound();
+            }
+            catch (NoPermissionException)
+            {
+                return Forbid();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!await _service.Existe(id)) return NotFound();
+                throw;
+            }
         }
 
         [Authorize(Roles = "GestorUtilizadores,Admin")]
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null) return NotFound();
-            var proposta = await _context.PropostaTrabalhos
-                .Include(p => p.IdClienteNavigation)
-                .FirstOrDefaultAsync(m => m.IdProposta == id);
+            var proposta = await _service.GetProposta(id);
             if (proposta == null) return NotFound();
             if (!IsAdmin() && proposta.IdUtilizador != GetUserId()) return Forbid();
             return View(proposta);
@@ -192,57 +138,35 @@ namespace TalentosIT.Web.Controllers
         [Authorize(Roles = "GestorUtilizadores,Admin")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var proposta = await _context.PropostaTrabalhos.FindAsync(id);
+            PropostaTrabalho? proposta = await _service.GetProposta(id);
             if (proposta == null) return NotFound();
             if (!IsAdmin() && proposta.IdUtilizador != GetUserId()) return Forbid();
-            _context.PropostaTrabalhos.Remove(proposta);
-            await _context.SaveChangesAsync();
+            await _service.Eliminar(id);
             return RedirectToAction(nameof(Index));
         }
-
 
         // GET: PropostaTrabalho/Elegiveis/5
         public async Task<IActionResult> Elegiveis(int? id)
         {
-            if (id == null) return NotFound();
-
-            var proposta = await _context.PropostaTrabalhos
-                .Include(p => p.PropostaSkills)
-                .ThenInclude(ps => ps.IdSkillNavigation)
-                .Include(p => p.IdClienteNavigation)
-                .FirstOrDefaultAsync(p => p.IdProposta == id);
-
+            var proposta = await _service.GetProposta(id);
             if (proposta == null) return NotFound();
 
-            var skillsExigidas = proposta.PropostaSkills.ToList();
-            if (!skillsExigidas.Any())
+            try
             {
+                List<Talento>? talentosElegiveis = await _service.GetTalentosElegiveis(proposta.IdProposta);
                 ViewData["Proposta"] = proposta;
-                ViewData["Aviso"] =
-                    "Esta proposta não tem skills exigidas definidas. Adicione skills antes de procurar talentos elegíveis.";
+                return View(talentosElegiveis);
+            }
+            catch (NotFoundException)
+            {
+                return NotFound();
+            }
+            catch (NoSkillsException)
+            {
+                ViewData["Aviso"] = "Esta proposta não tem skills exigidas definidas. Adicione skills antes de procurar talentos elegíveis.";
+                ViewData["Proposta"] = proposta;
                 return View(new List<Talento>());
             }
-
-            var todosTalentos = await _context.Talentos
-                .Where(t => t.Publico == true)
-                .Include(t => t.TalentoSkills)
-                .ThenInclude(ts => ts.IdSkillNavigation)
-                .ToListAsync();
-
-            var talentosElegiveis = todosTalentos
-                .Where(talento => skillsExigidas.All(skillExigida =>
-                    talento.TalentoSkills.Any(ts =>
-                        ts.IdSkill == skillExigida.IdSkill &&
-                        ts.AnosExperiencia >= skillExigida.AnosMinimosExperiencia
-                    )
-                ))
-                .OrderBy(t => t.PrecoHora * (proposta.HorasTotais ?? 0))
-                .ThenBy(t => t.PrimeiroNome)
-                .ThenBy(t => t.Apelido)
-                .ToList();
-
-            ViewData["Proposta"] = proposta;
-            return View(talentosElegiveis);
         }
     }
 }

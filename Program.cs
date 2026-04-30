@@ -14,9 +14,6 @@ var dataSource = dataSourceBuilder.Build();
 
 builder.Services.AddDbContext<TalentosIT.Web.Models.TalentosItContext>(options => options.UseNpgsql(dataSource));
 
-// DIP: Registar a interface IContaService com a sua implementação concreta ContaService
-builder.Services.AddScoped<IContaService, ContaService>();
-
 builder.Services.AddControllersWithViews();
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(options => options.LoginPath = "/Login");
@@ -25,6 +22,8 @@ builder.Services.AddScoped<UtilizadoresService>();
 builder.Services.AddScoped<TalentosService>();
 builder.Services.AddScoped<SkillsService>();
 builder.Services.AddScoped<ClientesService>();
+builder.Services.AddScoped<PropostaTrabalhoService>();
+builder.Services.AddScoped<IContaService, ContaService>();
 
 var app = builder.Build();
 
