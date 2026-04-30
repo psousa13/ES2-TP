@@ -1,5 +1,6 @@
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using TalentosIT.Web.Models;
 using TalentosIT.Web.Services;
@@ -11,18 +12,19 @@ var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
 dataSourceBuilder.MapEnum<TipoUtilizador>("tipo_utilizador");
 var dataSource = dataSourceBuilder.Build();
 
-builder.Services.AddDbContext<TalentosIT.Web.Models.TalentosItContext>(options =>
-    options.UseNpgsql(dataSource));
+builder.Services.AddDbContext<TalentosIT.Web.Models.TalentosItContext>(options => options.UseNpgsql(dataSource));
 
 // DIP: Registar a interface IContaService com a sua implementação concreta ContaService
 builder.Services.AddScoped<IContaService, ContaService>();
 
 builder.Services.AddControllersWithViews();
 
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(options =>
-{
-    options.LoginPath = "/Login";
-});
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(options => options.LoginPath = "/Login");
+
+builder.Services.AddScoped<UtilizadoresService>();
+builder.Services.AddScoped<TalentosService>();
+builder.Services.AddScoped<SkillsService>();
+builder.Services.AddScoped<ClientesService>();
 
 var app = builder.Build();
 

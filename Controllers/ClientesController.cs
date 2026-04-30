@@ -2,18 +2,21 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using TalentosIT.Web.DTO;
+using TalentosIT.Web.Exceptions;
 using TalentosIT.Web.Models;
+using TalentosIT.Web.Services;
 
 namespace TalentosIT.Web.Controllers
 {
     [Authorize(Roles = "Admin")]
     public class ClientesController : Controller
     {
-        private readonly TalentosItContext _context;
+        private readonly ClientesService _service;
 
-        public ClientesController(TalentosItContext context)
+        public ClientesController(ClientesService service)
         {
-            _context = context;
+            _service = service;
         }
 
         private int GetUserId() => int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
@@ -22,22 +25,23 @@ namespace TalentosIT.Web.Controllers
         // GET: Clientes
         public async Task<IActionResult> Index()
         {
-            var query = _context.Clientes.Include(c => c.IdUtilizadorNavigation).AsQueryable();
-            if (!IsAdmin())
-                query = query.Where(c => c.IdUtilizador == GetUserId());
-            return View(await query.ToListAsync());
+            var clientes = await _service.GetClientes(GetUserId(), IsAdmin());
+            return View(clientes);
         }
 
         // GET: Clientes/Details/5
         public async Task<IActionResult> Details(int? id)
         {
-            if (id == null) return NotFound();
-            var cliente = await _context.Clientes
-                .Include(c => c.IdUtilizadorNavigation)
-                .FirstOrDefaultAsync(m => m.IdCliente == id);
-            if (cliente == null) return NotFound();
-            if (!IsAdmin() && cliente.IdUtilizador != GetUserId()) return Forbid();
-            return View(cliente);
+            try
+            {
+                var cliente = await _service.GetCliente(id, GetUserId(), IsAdmin());
+                if (cliente == null) return NotFound();
+                return View(cliente);
+            }
+            catch (NoPermissionException)
+            {
+                return Forbid();
+            }
         }
 
         // GET: Clientes/Create
@@ -46,69 +50,88 @@ namespace TalentosIT.Web.Controllers
         // POST: Clientes/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("PrimeiroNome,Apelido,Email,Telefone,Rua,NumPorta,Cidade,Pais")] Cliente cliente)
+        public async Task<IActionResult> Create([Bind("PrimeiroNome,Apelido,Email,Telefone,Rua,NumPorta,Cidade,Pais")] CreateClienteDTO dto)
         {
-            ModelState.Remove("IdUtilizadorNavigation");
-            ModelState.Remove("PropostaTrabalhos");
+            if (!ModelState.IsValid) return View(dto);
 
-            if (ModelState.IsValid)
-            {
-                cliente.IdUtilizador = GetUserId();
-                _context.Add(cliente);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(cliente);
+            dto.IdUtilizador = GetUserId();
+            await _service.Criar(dto);
+            return RedirectToAction(nameof(Index));
         }
 
         // GET: Clientes/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null) return NotFound();
-            var cliente = await _context.Clientes.FindAsync(id);
-            if (cliente == null) return NotFound();
-            if (!IsAdmin() && cliente.IdUtilizador != GetUserId()) return Forbid();
-            return View(cliente);
+            try
+            {
+                var cliente = await _service.GetCliente(id, GetUserId(), IsAdmin());
+                EditClienteDTO dto = new()
+                {
+                    IdCliente = cliente.IdCliente,
+                    IdUtilizador = cliente.IdUtilizador,
+                    PrimeiroNome = cliente.PrimeiroNome,
+                    Apelido = cliente.Apelido,
+                    Email = cliente.Email,
+                    Telefone = cliente.Telefone,
+                    Rua = cliente.Rua,
+                    NumPorta = cliente.NumPorta,
+                    Cidade = cliente.Cidade,
+                    Pais = cliente.Pais
+                };
+                return View(dto);
+            }
+            catch (NotFoundException)
+            {
+                return NotFound();
+            }
+            catch (NoPermissionException)
+            {
+                return Forbid();
+            }
         }
 
         // POST: Clientes/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("IdCliente,IdUtilizador,PrimeiroNome,Apelido,Email,Telefone,Rua,NumPorta,Cidade,Pais")] Cliente cliente)
+        public async Task<IActionResult> Edit(int id, [Bind("IdCliente,IdUtilizador,PrimeiroNome,Apelido,Email,Telefone,Rua,NumPorta,Cidade,Pais")] EditClienteDTO dto)
         {
-            if (id != cliente.IdCliente) return NotFound();
-            if (!IsAdmin() && cliente.IdUtilizador != GetUserId()) return Forbid();
+            if (!ModelState.IsValid) return View(dto);
 
-            ModelState.Remove("IdUtilizadorNavigation");
-            ModelState.Remove("PropostaTrabalhos");
-
-            if (ModelState.IsValid)
+            try
             {
-                try
-                {
-                    _context.Update(cliente);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!_context.Clientes.Any(e => e.IdCliente == cliente.IdCliente)) return NotFound();
-                    throw;
-                }
+                await _service.Editar(id, dto, GetUserId(), IsAdmin());
                 return RedirectToAction(nameof(Index));
             }
-            return View(cliente);
+            catch (NotFoundException)
+            {
+                return NotFound();
+            }
+            catch (NoPermissionException)
+            {
+                return Forbid();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!_service.Existe(id)) return NotFound();
+                throw;
+            }
         }
 
         // GET: Clientes/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null) return NotFound();
-            var cliente = await _context.Clientes
-                .Include(c => c.IdUtilizadorNavigation)
-                .FirstOrDefaultAsync(m => m.IdCliente == id);
-            if (cliente == null) return NotFound();
-            if (!IsAdmin() && cliente.IdUtilizador != GetUserId()) return Forbid();
-            return View(cliente);
+            try
+            {
+                return View(await _service.GetCliente(id, GetUserId(), IsAdmin()));
+            }
+            catch (NotFoundException)
+            {
+                return NotFound();
+            }
+            catch (NoPermissionException)
+            {
+                return Forbid();
+            }
         }
 
         // POST: Clientes/Delete/5
@@ -116,12 +139,19 @@ namespace TalentosIT.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var cliente = await _context.Clientes.FindAsync(id);
-            if (cliente == null) return NotFound();
-            if (!IsAdmin() && cliente.IdUtilizador != GetUserId()) return Forbid();
-            _context.Clientes.Remove(cliente);
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            try
+            {
+                await _service.Eliminar(id, GetUserId(), IsAdmin());
+                return RedirectToAction(nameof(Index));
+            }
+            catch (NotFoundException)
+            {
+                return NotFound();
+            }
+            catch (NoPermissionException)
+            {
+                return Forbid();
+            }
         }
     }
 }

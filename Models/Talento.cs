@@ -23,7 +23,7 @@ public partial class Talento
 
     public string? Categoria { get; set; }
 
-    public bool? Publico { get; set; }
+    public bool Publico { get; set; }
 
     public virtual ICollection<Experiencia> Experiencia { get; set; } = new List<Experiencia>();
 

@@ -41,7 +41,7 @@ public partial class TalentosItContext : DbContext
     {
         if (!optionsBuilder.IsConfigured)
         {
-            optionsBuilder.UseNpgsql("Host=localhost;Database=TalentosIT;Username=postgres;Password=8445");
+            optionsBuilder.UseNpgsql("Host=localhost;Database=TalentosIT;Username=postgres;Password=123456789");
         }
     }
 

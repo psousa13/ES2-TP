@@ -1,0 +1,68 @@
+@model IEnumerable<Talento>
+
+@{
+    ViewData["Title"] = "Buscar Talentos";
+    var skills = ViewBag.Skills as SelectList;
+    var selectedSkills = Context.Request.Query["idSkills"];
+}
+
+<h1>Buscar Talentos</h1>
+
+@if (TempData["Aviso"] != null)
+{
+    <div class="alert alert-warning">@TempData["Aviso"]</div>
+}
+
+<form asp-controller="Talentos" asp-action="Buscar" method="get" class="row g-3 align-items-end w-75">
+    @Html.AntiForgeryToken()
+    <div class="col-md-5">
+        <select name="idSkills" class="form-select" multiple>
+            @if (skills != null)
+            {
+                foreach (var item in skills)
+                {
+                    <option value="@item.Value" selected="@(selectedSkills.Contains(item.Value) ? "selected" : null)">
+                        @item.Text
+                    </option>
+                }
+            }
+        </select>
+    </div>
+
+    <div class="col-md-2">
+        <button type="submit" class="btn btn-success w-100">Buscar</button>
+    </div>
+</form>
+
+<h3>Resultados</h3>
+
+@if (!Model.Any())
+{
+    <p>Nenhum talento encontrado.</p>
+} else {
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Email</th>
+                <th>Categoria</th>
+                <th>Preço/Hora</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.IdUtilizadorNavigation?.PrimeiroNome @item.IdUtilizadorNavigation?.Apelido</td>
+                    <td>@item.IdUtilizadorNavigation?.Email</td>
+                    <td>@(item.Categoria ?? "-")</td>
+                    <td>@(item.PrecoHora.HasValue ? item.PrecoHora.Value.ToString("F2") + " €/h" : "-")</td>
+                    <td style="white-space: nowrap;">
+                        <a asp-action="Details" asp-route-id="@item.IdTalento" class="btn btn-sm btn-info">Detalhes</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
