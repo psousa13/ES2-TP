@@ -7,13 +7,8 @@ namespace TalentosIT.Web.Services.Matching
     {
         public bool IsMatch(Talento talento, PropostaTrabalho proposta)
         {
-            // Uma proposta sem skills não deve gerar match.
-            if (proposta.PropostaSkills == null || !proposta.PropostaSkills.Any())
-            {
-                return false;
-            }
-
-            // Verifica se todas as skills exigidas existem no talento.
+            // Esta regra só verifica se as skills existem no talento.
+            // A validação de "proposta tem skills" fica numa regra separada.
             return proposta.PropostaSkills.All(skillExigida =>
                 talento.TalentoSkills.Any(skillTalento =>
                     skillTalento.IdSkill == skillExigida.IdSkill
