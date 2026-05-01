@@ -157,7 +157,7 @@ namespace TalentosIT.Web.Controllers
         {
             try
             {
-                await _service.AtribuirClienteAsync(id, idCliente, titulo, horasTotais);
+                await _service.AtribuirCliente(id, idCliente, titulo, horasTotais);
             }
             catch (NotFoundException)
             {

@@ -11,12 +11,10 @@ namespace TalentosIT.Web.Controllers
     [Authorize(Roles = "Admin")]
     public class UtilizadoresController : Controller
     {
-        private readonly TalentosItContext _context;
         private readonly UtilizadoresService _service;
 
-        public UtilizadoresController(TalentosItContext context, UtilizadoresService service)
+        public UtilizadoresController(UtilizadoresService service)
         {
-            _context = context;
             _service = service;
         }
 

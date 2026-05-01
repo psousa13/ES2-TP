@@ -134,7 +134,7 @@ namespace TalentosIT.Web.Services
             return await _context.Clientes.Where(c => c.IdUtilizador == id).ToListAsync();
         }
 
-        public async Task AtribuirClienteAsync(int talentoId, int clienteId, string titulo, int horasTotais)
+        public async Task AtribuirCliente(int talentoId, int clienteId, string titulo, int horasTotais)
         {
             var talento = await _context.Talentos.FindAsync(talentoId);
             var cliente = await _context.Clientes.FindAsync(clienteId);
