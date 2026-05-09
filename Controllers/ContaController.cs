@@ -11,10 +11,12 @@ namespace TalentosIT.Web.Controllers;
 public class ContaController : Controller
 {
     private readonly IContaService _contaService;
+    private readonly RegistoAtividadeService _registoService;
 
-    public ContaController(IContaService contaService)
+    public ContaController(IContaService contaService, RegistoAtividadeService registoService)
     {
         _contaService = contaService;
+        _registoService = registoService;
     }
 
     [HttpGet]
@@ -84,7 +86,8 @@ public class ContaController : Controller
             };
             await _contaService.CriarClienteAsync(cliente);
         }
-
+        var tipoLabel = tipo == TipoUtilizador.GestorUtilizadores ? "Cliente" : "Profissional";
+        await _registoService.RegistarAsync(utilizador.IdUtilizador, $"Conta criada. Tipo: {tipoLabel}.");
         return RedirectToAction("Login", "Conta");
     }
 
@@ -134,6 +137,8 @@ public class ContaController : Controller
             principal
         );
 
+        await _registoService.RegistarAsync(utilizador.IdUtilizador, "Login efetuado com sucesso.");
+
         return RedirectToAction("Index", "Home");
     }
 
@@ -141,6 +146,10 @@ public class ContaController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout()
     {
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+        if (userIdClaim != null)
+            await _registoService.RegistarAsync(int.Parse(userIdClaim.Value), "Logout efetuado.");
+
         await HttpContext.SignOutAsync();
         return RedirectToAction("Index", "Home");
     }

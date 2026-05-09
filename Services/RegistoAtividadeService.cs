@@ -11,6 +11,19 @@ namespace TalentosIT.Web.Services
         {
             _context = context;
         }
+        
+        // NOVO — escreve um registo na BD
+        public async Task RegistarAsync(int idUtilizador, string descricaoAcao)
+        {
+            var registo = new RegistoAtividade
+            {
+                IdUtilizador = idUtilizador,
+                DataHora = DateTime.Now,
+                DescricaoAcao = descricaoAcao
+            };
+            _context.RegistoAtividades.Add(registo);
+            await _context.SaveChangesAsync();
+        }
 
         // RF31 — Admin: todos os registos do sistema
         public async Task<List<RegistoAtividade>> GetTodos()

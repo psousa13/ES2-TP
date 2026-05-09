@@ -12,10 +12,12 @@ namespace TalentosIT.Web.Controllers
     public class TalentosController : Controller
     {
         private readonly TalentosService _service;
+        private readonly RegistoAtividadeService _registoService;
 
-        public TalentosController(TalentosService service)
+        public TalentosController(TalentosService service, RegistoAtividadeService registoService)
         {
             _service = service;
+            _registoService = registoService;
         }
 
         // GET: Talentos
@@ -62,6 +64,7 @@ namespace TalentosIT.Web.Controllers
             }
 
             await _service.Criar(dto);
+            await _registoService.RegistarAsync(dto.IdUtilizador, $"Perfil de talento criado. Categoria: {dto.Categoria}.");
             return RedirectToAction(nameof(Index));
         }
 
@@ -99,6 +102,7 @@ namespace TalentosIT.Web.Controllers
             try
             {
                 await _service.Editar(id, dto);
+                await _registoService.RegistarAsync(dto.IdUtilizador, $"Perfil de talento (ID {id}) editado.");
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -121,7 +125,10 @@ namespace TalentosIT.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
             await _service.Eliminar(id);
+            if (userIdClaim != null)
+                await _registoService.RegistarAsync(int.Parse(userIdClaim.Value), $"Perfil de talento (ID {id}) eliminado.");
             return RedirectToAction(nameof(Index));
         }
 

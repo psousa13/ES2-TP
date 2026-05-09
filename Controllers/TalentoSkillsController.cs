@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using TalentosIT.Web.Models;
+using TalentosIT.Web.Services;
 
 namespace TalentosIT.Web.Controllers
 {
@@ -10,10 +11,12 @@ namespace TalentosIT.Web.Controllers
     public class TalentoSkillsController : Controller
     {
         private readonly TalentosItContext _context;
+        private readonly RegistoAtividadeService _registoService;
 
-        public TalentoSkillsController(TalentosItContext context)
+        public TalentoSkillsController(TalentosItContext context, RegistoAtividadeService registoService)
         {
             _context = context;
+            _registoService = registoService;
         }
 
         // GET: TalentoSkills/Gerir/5  (5 = IdTalento)
@@ -71,6 +74,10 @@ namespace TalentosIT.Web.Controllers
             _context.TalentoSkills.Add(talentoSkill);
             await _context.SaveChangesAsync();
 
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+            if (userIdClaim != null)
+                await _registoService.RegistarAsync(int.Parse(userIdClaim.Value), $"Skill (ID {idSkill}) adicionada ao talento (ID {idTalento}) com {anosExperiencia} anos de experiência.");
+
             TempData["Sucesso"] = "Skill adicionada com sucesso!";
             return RedirectToAction(nameof(Gerir), new { id = idTalento });
         }
@@ -110,6 +117,11 @@ namespace TalentosIT.Web.Controllers
             {
                 _context.TalentoSkills.Remove(talentoSkill);
                 await _context.SaveChangesAsync();
+
+                var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+                if (userIdClaim != null)
+                    await _registoService.RegistarAsync(int.Parse(userIdClaim.Value), $"Skill (ID {idSkill}) removida do talento (ID {idTalento}).");
+
                 TempData["Sucesso"] = "Skill removida do perfil.";
             }
 

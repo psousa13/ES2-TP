@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using TalentosIT.Web.Models;
+using TalentosIT.Web.Services;
 
 namespace TalentosIT.Web.Controllers
 {
@@ -10,10 +11,12 @@ namespace TalentosIT.Web.Controllers
     public class PropostaSkillsController : Controller
     {
         private readonly TalentosItContext _context;
+        private readonly RegistoAtividadeService _registoService;
 
-        public PropostaSkillsController(TalentosItContext context)
+        public PropostaSkillsController(TalentosItContext context, RegistoAtividadeService registoService)
         {
             _context = context;
+            _registoService = registoService;
         }
 
         // GET: PropostaSkills/Gerir/5  (5 = IdProposta)
@@ -72,6 +75,10 @@ namespace TalentosIT.Web.Controllers
             _context.PropostaSkills.Add(propostaSkill);
             await _context.SaveChangesAsync();
 
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+            if (userIdClaim != null)
+                await _registoService.RegistarAsync(int.Parse(userIdClaim.Value), $"Skill (ID {idSkill}) adicionada à proposta (ID {idProposta}) com mínimo de {anosMinimosExperiencia} anos.");
+
             TempData["Sucesso"] = "Skill adicionada à proposta com sucesso!";
             return RedirectToAction(nameof(Gerir), new { id = idProposta });
         }
@@ -113,6 +120,11 @@ namespace TalentosIT.Web.Controllers
             {
                 _context.PropostaSkills.Remove(propostaSkill);
                 await _context.SaveChangesAsync();
+
+                var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+                if (userIdClaim != null)
+                    await _registoService.RegistarAsync(int.Parse(userIdClaim.Value), $"Skill (ID {idSkill}) removida da proposta (ID {idProposta}).");
+
                 TempData["Sucesso"] = "Skill removida da proposta.";
             }
 

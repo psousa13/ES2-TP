@@ -14,10 +14,12 @@ namespace TalentosIT.Web.Controllers
     public class PropostaTrabalhoController : Controller
     {
         private readonly PropostaTrabalhoService _service;
+        private readonly RegistoAtividadeService _registoService;
 
-        public PropostaTrabalhoController(PropostaTrabalhoService service)
+        public PropostaTrabalhoController(PropostaTrabalhoService service, RegistoAtividadeService registoService)
         {
             _service = service;
+            _registoService = registoService;
         }
 
         private int GetUserId() => int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
@@ -58,6 +60,7 @@ namespace TalentosIT.Web.Controllers
             try
             {
                 await _service.Criar(dto, GetUserId(), IsAdmin());
+                await _registoService.RegistarAsync(GetUserId(), $"Proposta de trabalho criada: \"{dto.Titulo}\".");
                 return RedirectToAction(nameof(Index));
             }
             catch (NotFoundException)
@@ -108,6 +111,7 @@ namespace TalentosIT.Web.Controllers
             try
             {
                 await _service.Editar(id, dto, GetUserId(), IsAdmin());
+                await _registoService.RegistarAsync(GetUserId(), $"Proposta de trabalho (ID {id}) editada: \"{dto.Titulo}\".");
                 return RedirectToAction(nameof(Index));
             }
             catch (NotFoundException)
@@ -142,6 +146,7 @@ namespace TalentosIT.Web.Controllers
             PropostaTrabalho? proposta = await _service.GetProposta(id);
             if (proposta == null) return NotFound();
             if (!IsAdmin() && proposta.IdUtilizador != GetUserId()) return Forbid();
+            await _registoService.RegistarAsync(GetUserId(), $"Proposta de trabalho (ID {id}) \"{proposta.Titulo}\" eliminada.");
             await _service.Eliminar(id);
             return RedirectToAction(nameof(Index));
         }
