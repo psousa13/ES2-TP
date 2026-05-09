@@ -49,19 +49,25 @@
                                 <a class="nav-link" asp-controller="PropostaTrabalho" asp-action="Index">Propostas</a>
                             </li>
 
-                            @* Clientes: admin only *@
+                            @* Clientes e Utilizadores: admin only *@
                             @if (User.IsInRole("Admin"))
                             {
                                 <li class="nav-item">
                                     <a class="nav-link" asp-controller="Clientes" asp-action="Index">Clientes</a>
                                 </li>
-                            }
-
-                            @* Utilizadores: admin only *@
-                            @if (User.IsInRole("Admin"))
-                            {
                                 <li class="nav-item">
                                     <a class="nav-link" asp-controller="Utilizadores" asp-action="Index">Utilizadores</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="RegistoAtividade" asp-action="Index">Todos os Registos</a>
+                                </li>
+                            }
+
+                            @* Registos por utilizador: admin e gestor *@
+                            @if (User.IsInRole("Admin") || User.IsInRole("GestorUtilizadores"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="RegistoAtividade" asp-action="PorUtilizador">Registos por Utilizador</a>
                                 </li>
                             }
                         }
@@ -121,4 +127,4 @@
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
-</html>
+</html> 

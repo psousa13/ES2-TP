@@ -1,0 +1,35 @@
+﻿@model IEnumerable<TalentosIT.Web.Models.RegistoAtividade>
+
+@{
+    ViewData["Title"] = "Todos os Registos do Sistema";
+}
+
+<h2>Todos os Registos do Sistema</h2>
+<p class="text-muted">Listagem completa de toda a atividade registada na plataforma.</p>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">Nenhum registo de atividade encontrado.</div>
+}
+else
+{
+    <table class="table table-bordered table-sm">
+        <thead class="table-light">
+        <tr>
+            <th>Data / Hora</th>
+            <th>Utilizador</th>
+            <th>Ação</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var registo in Model)
+        {
+            <tr>
+                <td>@registo.DataHora?.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                <td>@registo.IdUtilizadorNavigation?.PrimeiroNome @registo.IdUtilizadorNavigation?.Apelido</td>
+                <td>@registo.DescricaoAcao</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}

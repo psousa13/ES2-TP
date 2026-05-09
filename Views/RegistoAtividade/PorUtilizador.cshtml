@@ -1,0 +1,54 @@
+﻿@model IEnumerable<TalentosIT.Web.Models.RegistoAtividade>
+
+@{
+    ViewData["Title"] = "Registos por Utilizador";
+}
+
+<h2>Registos por Utilizador</h2>
+<p class="text-muted">Consulta de atividade registada para um utilizador específico.</p>
+
+<form method="get" class="row g-3 mb-4">
+    <div class="col-md-6">
+        <label class="form-label fw-bold">Selecionar Utilizador</label>
+        <select name="idUtilizador" class="form-select" onchange="this.form.submit()">
+            <option value="">— Selecione um utilizador —</option>
+            @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["Utilizadores"]!)
+            {
+                if (item.Selected)
+                {
+                    <option value="@item.Value" selected>@item.Text</option>
+                }
+                else
+                {
+                    <option value="@item.Value">@item.Text</option>
+                }
+            }
+        </select>
+    </div>
+</form>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">Nenhum registo encontrado para este utilizador.</div>
+}
+else
+{
+    <p class="text-success fw-bold">@Model.Count() registo(s) encontrado(s).</p>
+    <table class="table table-bordered table-sm">
+        <thead class="table-light">
+        <tr>
+            <th>Data / Hora</th>
+            <th>Ação</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var registo in Model)
+        {
+            <tr>
+                <td>@registo.DataHora?.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                <td>@registo.DescricaoAcao</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
