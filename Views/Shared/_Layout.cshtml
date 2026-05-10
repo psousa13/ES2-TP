@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt">
 <head>
     <meta charset="utf-8" />
@@ -68,6 +68,14 @@
                             {
                                 <li class="nav-item">
                                     <a class="nav-link" asp-controller="RegistoAtividade" asp-action="PorUtilizador">Registos por Utilizador</a>
+                                </li>
+                            }
+
+                            @* Relatórios de preços médios mensais *@
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="RelatorioPreco" asp-action="Index">Relatórios</a>
                                 </li>
                             }
                         }
