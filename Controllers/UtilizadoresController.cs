@@ -5,10 +5,11 @@ using TalentosIT.Web.DTO;
 using TalentosIT.Web.Exceptions;
 using TalentosIT.Web.Models;
 using TalentosIT.Web.Services;
+using System.Security.Claims;
 
 namespace TalentosIT.Web.Controllers
 {
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,GestorUtilizadores")]
     public class UtilizadoresController : Controller
     {
         private readonly UtilizadoresService _service;
@@ -39,8 +40,13 @@ namespace TalentosIT.Web.Controllers
         // POST: Utilizadores/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("PrimeiroNome,Apelido,Email,Telefone,PalavraPasse")] CreateUtilizadorDTO dto)
+        public async Task<IActionResult> Create([Bind("PrimeiroNome,Apelido,Email,Telefone,PalavraPasse,TipoUtilizador")] CreateUtilizadorDTO dto)
         {
+            if (User.IsInRole("GestorUtilizadores") && dto.TipoUtilizador == TipoUtilizador.Admin)
+            {
+                ModelState.AddModelError("TipoUtilizador", "Um gestor não pode criar administradores.");
+            }
+
             if (!ModelState.IsValid) return View(dto);
 
             try
@@ -63,6 +69,12 @@ namespace TalentosIT.Web.Controllers
 
             if (utilizador == null) return NotFound();
 
+            if (User.IsInRole("GestorUtilizadores") &&
+                utilizador.TipoUtilizador == TipoUtilizador.Admin)
+            {
+                return Forbid();
+            }
+
             var dto = new EditUtilizadorDTO
             {
                 IdUtilizador = utilizador.IdUtilizador,
@@ -77,12 +89,28 @@ namespace TalentosIT.Web.Controllers
             return View(dto);
         }
 
+        
         // POST: Utilizadores/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("IdUtilizador,PrimeiroNome,Apelido,Email,Telefone,TipoUtilizador,Ativo")] EditUtilizadorDTO dto)
         {
             if (id != dto.IdUtilizador) return NotFound();
+
+            var utilizadorAtual = await _service.GetUtilizador(dto.IdUtilizador);
+
+            if (utilizadorAtual == null) return NotFound();
+
+            if (User.IsInRole("GestorUtilizadores") &&
+                utilizadorAtual.TipoUtilizador == TipoUtilizador.Admin)
+            {
+                return Forbid();
+            }
+
+            if (User.IsInRole("GestorUtilizadores") && dto.TipoUtilizador == TipoUtilizador.Admin)
+            {
+                ModelState.AddModelError("TipoUtilizador", "Um gestor não pode promover utilizadores a administrador.");
+            }
 
             if (!ModelState.IsValid) return View(dto);
 
@@ -95,9 +123,39 @@ namespace TalentosIT.Web.Controllers
                 if (!await _service.Existe(dto.IdUtilizador)) return NotFound();
                 throw;
             }
+
             return RedirectToAction(nameof(Index));
         }
 
+        // POST: Utilizadores/Desativar/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Desativar(int id)
+        {
+            var utilizador = await _service.GetUtilizador(id);
+
+            if (utilizador == null) return NotFound();
+
+            if (User.IsInRole("GestorUtilizadores") &&
+                utilizador.TipoUtilizador == TipoUtilizador.Admin)
+            {
+                return Forbid();
+            }
+
+            var currentUserId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+
+            if (utilizador.IdUtilizador == currentUserId)
+            {
+                TempData["Erro"] = "Não pode desativar a sua própria conta.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            await _service.Desativar(id);
+            
+
+            return RedirectToAction(nameof(Index));
+        }
+        
         // GET: Utilizadores/Delete/5
         public Task<IActionResult> Delete(int? id)
         {

@@ -41,11 +41,23 @@ namespace TalentosIT.Web.Services
                 Email = dto.Email,
                 PalavraPasse = _hasher.HashPassword(null, dto.PalavraPasse),
                 Telefone = dto.Telefone,
-                TipoUtilizador = TipoUtilizador.Utilizador,
+                TipoUtilizador = dto.TipoUtilizador,
                 Ativo = true
             };
 
             _context.Add(utilizador);
+            await _context.SaveChangesAsync();
+        }
+        
+        public async Task Desativar(int id)
+        {
+            var utilizador = await _context.Utilizadors.FindAsync(id);
+
+            if (utilizador == null)
+                return;
+
+            utilizador.Ativo = false;
+
             await _context.SaveChangesAsync();
         }
 
