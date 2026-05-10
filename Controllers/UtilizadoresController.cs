@@ -13,10 +13,14 @@ namespace TalentosIT.Web.Controllers
     public class UtilizadoresController : Controller
     {
         private readonly UtilizadoresService _service;
+        private readonly RegistoAtividadeService _registoService;
 
-        public UtilizadoresController(UtilizadoresService service)
+        public UtilizadoresController(
+            UtilizadoresService service,
+            RegistoAtividadeService registoService)
         {
             _service = service;
+            _registoService = registoService;
         }
 
         // GET: Utilizadores
@@ -52,6 +56,13 @@ namespace TalentosIT.Web.Controllers
             try
             {
                 await _service.Criar(dto);
+
+                var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+                await _registoService.RegistarAsync(
+                    currentUserId,
+                    $"Utilizador criado: {dto.Email}. Tipo: {dto.TipoUtilizador}."
+                );
             }
             catch (AlreadyRegisteredException)
             {
@@ -117,6 +128,13 @@ namespace TalentosIT.Web.Controllers
             try
             {
                 await _service.Editar(id, dto);
+
+                var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+                await _registoService.RegistarAsync(
+                    currentUserId,
+                    $"Utilizador (ID {dto.IdUtilizador}) editado. Novo tipo: {dto.TipoUtilizador}. Ativo: {dto.Ativo}."
+                );
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -142,7 +160,7 @@ namespace TalentosIT.Web.Controllers
                 return Forbid();
             }
 
-            var currentUserId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+            var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 
             if (utilizador.IdUtilizador == currentUserId)
             {
@@ -151,7 +169,11 @@ namespace TalentosIT.Web.Controllers
             }
 
             await _service.Desativar(id);
-            
+
+            await _registoService.RegistarAsync(
+                currentUserId,
+                $"Conta do utilizador (ID {utilizador.IdUtilizador}) desativada."
+            );
 
             return RedirectToAction(nameof(Index));
         }
