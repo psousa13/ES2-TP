@@ -24,7 +24,7 @@ namespace TalentosIT.Web.Controllers
 
         private int GetUserId() => int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
         private bool IsAdmin() => User.IsInRole("Admin");
-        private bool IsClient() => User.IsInRole("GestorUtilizadores") || IsAdmin();
+        private bool IsClient() => User.IsInRole("Cliente") || IsAdmin();
 
         public async Task<IActionResult> Index()
         {

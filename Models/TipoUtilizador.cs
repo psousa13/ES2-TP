@@ -4,5 +4,6 @@ public enum TipoUtilizador
 {
     Utilizador,
     GestorUtilizadores,
-    Admin
+    Admin,
+    Cliente
 }

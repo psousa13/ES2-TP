@@ -85,7 +85,8 @@
                         @if (User?.Identity?.IsAuthenticated == true)
                         {
                             var roleLabel = User.IsInRole("Admin") ? "Admin"
-                                : User.IsInRole("GestorUtilizadores") ? "Cliente"
+                                : User.IsInRole("GestorUtilizadores") ? "Gestor de Utilizadores"
+                                : User.IsInRole("Cliente") ? "Cliente"
                                 : "Profissional";
                             var roleBadge = User.IsInRole("Admin") ? "bg-danger"
                                 : User.IsInRole("GestorUtilizadores") ? "bg-primary"

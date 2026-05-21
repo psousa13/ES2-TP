@@ -74,7 +74,7 @@ namespace TalentosIT.Web.Controllers
             }
 
             // CLIENT: show workers eligible for each of their job offers
-            if (User.IsInRole("GestorUtilizadores"))
+            if (User.IsInRole("Cliente"))
             {
                 var propostas = await _context.PropostaTrabalhos
                     .Where(p => p.IdUtilizador == userId)
@@ -104,6 +104,12 @@ namespace TalentosIT.Web.Controllers
                 ViewData["Propostas"] = propostas;
 
                 return View("IndexClient");
+            }
+
+            // Gestor utilizadores
+            if (User.IsInRole("GestorUtilizadores"))
+            {
+                return View();
             }
 
             // ADMIN: general dashboard with stats
