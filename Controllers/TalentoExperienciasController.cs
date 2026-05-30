@@ -1,47 +1,48 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using TalentosIT.Web.Models;
 using Microsoft.AspNetCore.Authorization;
+using TalentosIT.Web.Services;
+using TalentosIT.Web.Exceptions;
 
 namespace TalentosIT.Web.Controllers
 {
     [Authorize]
     public class TalentoExperienciasController : Controller
     {
-        private readonly TalentosItContext _context;
+        private readonly TalentoExperienciasService _experienciasService;
 
-        public TalentoExperienciasController(TalentosItContext context)
+        public TalentoExperienciasController(TalentoExperienciasService experienciasService)
         {
-            _context = context;
+            _experienciasService = experienciasService;
         }
 
         // GET: TalentoExperiencias/Gerir/5
         public async Task<IActionResult> Gerir(int? id)
         {
-            if (id == null) return NotFound();
-
-            var talento = await _context.Talentos
-                .Include(t => t.Experiencia)
-                .FirstOrDefaultAsync(t => t.IdTalento == id);
-
-            if (talento == null) return NotFound();
-
-            return View(talento);
+            try
+            {
+                var talento = await _experienciasService.GetTalentoComExperiencias(id);
+                return View(talento);
+            }
+            catch (NotFoundException)
+            {
+                return NotFound();
+            }
         }
 
         // GET: TalentoExperiencias/Create?id=5
         public async Task<IActionResult> Create(int? id)
         {
-            if (id == null) return NotFound();
-
-            var talento = await _context.Talentos
-                .Include(t => t.Experiencia)
-                .FirstOrDefaultAsync(t => t.IdTalento == id);
-
-            if (talento == null) return NotFound();
-
-            ViewData["Talento"] = talento;
-            return View(new Experiencia { IdTalento = id.Value });
+            try
+            {
+                var talento = await _experienciasService.GetTalentoComExperiencias(id);
+                ViewData["Talento"] = talento;
+                return View(new Experiencia { IdTalento = id!.Value });
+            }
+            catch (NotFoundException)
+            {
+                return NotFound();
+            }
         }
 
         // POST: TalentoExperiencias/Create
@@ -49,56 +50,40 @@ namespace TalentosIT.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("IdTalento,Titulo,Empresa,AnoInicio,AnoFim")] Experiencia model)
         {
-            var talento = await _context.Talentos
-                .Include(t => t.Experiencia)
-                .FirstOrDefaultAsync(t => t.IdTalento == model.IdTalento);
-
-            if (talento == null) return NotFound();
-            ViewData["Talento"] = talento;
-
-            if (!ModelState.IsValid) return View(model);
-
-            // FIX: validate AnoFim >= AnoInicio
-            if (model.AnoFim.HasValue && model.AnoFim.Value < model.AnoInicio)
+            try
             {
-                ModelState.AddModelError("AnoFim", "O ano de fim deve ser igual ou superior ao ano de início.");
+                // Carrega o talento para a view caso falte alguma validação local ou do service
+                var talento = await _experienciasService.GetTalentoComExperiencias(model.IdTalento);
+                ViewData["Talento"] = talento;
+
+                if (!ModelState.IsValid) return View(model);
+
+                await _experienciasService.Criar(model);
+                return RedirectToAction(nameof(Gerir), new { id = model.IdTalento });
+            }
+            catch (NotFoundException)
+            {
+                return NotFound();
+            }
+            catch (BusinessException e)
+            {
+                ModelState.AddModelError(e.Property, e.Message);
                 return View(model);
             }
-
-            // FIX: validate year range makes sense
-            int anoAtual = DateTime.Now.Year;
-            if (model.AnoInicio > anoAtual)
-            {
-                ModelState.AddModelError("AnoInicio", "O ano de início não pode ser no futuro.");
-                return View(model);
-            }
-
-            // FIX: corrected overlap detection
-            var overlap = await ValidarSobreposicao(model);
-            if (overlap != null)
-            {
-                ModelState.AddModelError("AnoInicio",
-                    $"O período sobrepõe-se com a experiência '{overlap.Titulo}' ({overlap.AnoInicio}–{(overlap.AnoFim.HasValue ? overlap.AnoFim.Value.ToString() : "Presente")}).");
-                return View(model);
-            }
-
-            _context.Add(model);
-            await _context.SaveChangesAsync();
-
-            return RedirectToAction(nameof(Gerir), new { id = model.IdTalento });
         }
 
         // GET: TalentoExperiencias/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null) return NotFound();
-
-            var experiencia = await _context.Experiencias
-                .Include(e => e.IdTalentoNavigation)
-                .FirstOrDefaultAsync(e => e.IdExperiencia == id);
-
-            if (experiencia == null) return NotFound();
-            return View(experiencia);
+            try
+            {
+                var experiencia = await _experienciasService.GetExperiencia(id);
+                return View(experiencia);
+            }
+            catch (NotFoundException)
+            {
+                return NotFound();
+            }
         }
 
         // POST: TalentoExperiencias/Edit/5
@@ -106,50 +91,36 @@ namespace TalentosIT.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("IdExperiencia,IdTalento,Titulo,Empresa,AnoInicio,AnoFim")] Experiencia model)
         {
-            if (id != model.IdExperiencia) return NotFound();
-
             if (!ModelState.IsValid) return View(model);
 
-            // FIX: validate AnoFim >= AnoInicio
-            if (model.AnoFim.HasValue && model.AnoFim.Value < model.AnoInicio)
+            try
             {
-                ModelState.AddModelError("AnoFim", "O ano de fim deve ser igual ou superior ao ano de início.");
+                await _experienciasService.Editar(id, model);
+                return RedirectToAction(nameof(Gerir), new { id = model.IdTalento });
+            }
+            catch (NotFoundException)
+            {
+                return NotFound();
+            }
+            catch (BusinessException e)
+            {
+                ModelState.AddModelError(e.Property, e.Message);
                 return View(model);
             }
-
-            int anoAtual = DateTime.Now.Year;
-            if (model.AnoInicio > anoAtual)
-            {
-                ModelState.AddModelError("AnoInicio", "O ano de início não pode ser no futuro.");
-                return View(model);
-            }
-
-            // FIX: corrected overlap detection
-            var overlap = await ValidarSobreposicao(model);
-            if (overlap != null)
-            {
-                ModelState.AddModelError("AnoInicio",
-                    $"O período sobrepõe-se com a experiência '{overlap.Titulo}' ({overlap.AnoInicio}–{(overlap.AnoFim.HasValue ? overlap.AnoFim.Value.ToString() : "Presente")}).");
-                return View(model);
-            }
-
-            _context.Update(model);
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Gerir), new { id = model.IdTalento });
         }
 
         // GET: TalentoExperiencias/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null) return NotFound();
-
-            var experiencia = await _context.Experiencias
-                .Include(e => e.IdTalentoNavigation)
-                .FirstOrDefaultAsync(m => m.IdExperiencia == id);
-
-            if (experiencia == null) return NotFound();
-
-            return View(experiencia);
+            try
+            {
+                var experiencia = await _experienciasService.GetExperiencia(id);
+                return View(experiencia);
+            }
+            catch (NotFoundException)
+            {
+                return NotFound();
+            }
         }
 
         // POST: TalentoExperiencias/Delete/5
@@ -157,30 +128,18 @@ namespace TalentosIT.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var experiencia = await _context.Experiencias.FindAsync(id);
-            if (experiencia == null) return NotFound();
+            try
+            {
+                var experiencia = await _experienciasService.GetExperiencia(id);
+                int idTalento = experiencia.IdTalento;
 
-            _context.Experiencias.Remove(experiencia);
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Gerir), new { id = experiencia.IdTalento });
-        }
-
-        // FIX: correct overlap logic
-        // Two periods overlap if: startA <= endB AND startB <= endA
-        // Treating null AnoFim as "present" (i.e., effectively infinity)
-        private Task<Experiencia?> ValidarSobreposicao(Experiencia model)
-        {
-            int novoInicio = model.AnoInicio;
-            int? novoFim = model.AnoFim;
-
-            return _context.Experiencias.FirstOrDefaultAsync(e =>
-                e.IdTalento == model.IdTalento &&
-                e.IdExperiencia != model.IdExperiencia &&
-                // existing starts before or when new ends (or new has no end)
-                e.AnoInicio <= (novoFim ?? int.MaxValue) &&
-                // existing ends after or when new starts (or existing has no end)
-                (e.AnoFim == null || e.AnoFim >= novoInicio)
-            );
+                await _experienciasService.Eliminar(id);
+                return RedirectToAction(nameof(Gerir), new { id = idTalento });
+            }
+            catch (NotFoundException)
+            {
+                return NotFound();
+            }
         }
     }
 }

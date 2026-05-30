@@ -1,47 +1,44 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using TalentosIT.Web.Models;
 using TalentosIT.Web.Services;
+using TalentosIT.Web.Exceptions;
+using System.Security.Claims;
 
 namespace TalentosIT.Web.Controllers
 {
     [Authorize]
     public class TalentoSkillsController : Controller
     {
-        private readonly TalentosItContext _context;
-        private readonly RegistoAtividadeService _registoService;
+        private readonly TalentoSkillsService _skillsService;
 
-        public TalentoSkillsController(TalentosItContext context, RegistoAtividadeService registoService)
+        public TalentoSkillsController(TalentoSkillsService skillsService)
         {
-            _context = context;
-            _registoService = registoService;
+            _skillsService = skillsService;
         }
 
-        // GET: TalentoSkills/Gerir/5  (5 = IdTalento)
+        private int? GetUserId()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            return userIdClaim != null ? int.Parse(userIdClaim.Value) : null;
+        }
+
+        // GET: TalentoSkills/Gerir/5
         public async Task<IActionResult> Gerir(int? id)
         {
-            if (id == null) return NotFound();
+            try
+            {
+                var (talento, skillsDisponiveis) = await _skillsService.GetDadosGestao(id);
 
-            var talento = await _context.Talentos
-                .Include(t => t.TalentoSkills)
-                    .ThenInclude(ts => ts.IdSkillNavigation)
-                .FirstOrDefaultAsync(t => t.IdTalento == id);
+                ViewData["IdSkill"] = new SelectList(skillsDisponiveis, "IdSkill", "Nome");
+                ViewData["Talento"] = talento;
 
-            if (talento == null) return NotFound();
-
-            // Skills ainda não associadas a este talento
-            var idsJaAssociados = talento.TalentoSkills.Select(ts => ts.IdSkill).ToHashSet();
-            var skillsDisponiveis = await _context.Skills
-                .Where(s => !idsJaAssociados.Contains(s.IdSkill))
-                .OrderBy(s => s.Nome)
-                .ToListAsync();
-
-            ViewData["IdSkill"] = new SelectList(skillsDisponiveis, "IdSkill", "Nome");
-            ViewData["Talento"] = talento;
-
-            return View(talento);
+                return View(talento);
+            }
+            catch (NotFoundException)
+            {
+                return NotFound();
+            }
         }
 
         // POST: TalentoSkills/Adicionar
@@ -49,36 +46,26 @@ namespace TalentosIT.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Adicionar(int idTalento, int idSkill, int anosExperiencia)
         {
-            if (anosExperiencia < 0)
+            try
             {
-                TempData["Erro"] = "Os anos de experiência não podem ser negativos.";
-                return RedirectToAction(nameof(Gerir), new { id = idTalento });
+                int? userId = GetUserId();
+                await _skillsService.AdicionarSkill(idTalento, idSkill, anosExperiencia, userId);
+
+                TempData["Sucesso"] = "Skill adicionada com sucesso!";
             }
-
-            bool jaExiste = await _context.TalentoSkills
-                .AnyAsync(ts => ts.IdTalento == idTalento && ts.IdSkill == idSkill);
-
-            if (jaExiste)
+            catch (AlreadyRegisteredException)
             {
                 TempData["Aviso"] = "Esta skill já está associada ao perfil.";
-                return RedirectToAction(nameof(Gerir), new { id = idTalento });
+            }
+            catch (BusinessException e)
+            {
+                TempData[e.Property] = e.Message;
+            }
+            catch (NotFoundException)
+            {
+                return NotFound();
             }
 
-            var talentoSkill = new TalentoSkill
-            {
-                IdTalento = idTalento,
-                IdSkill = idSkill,
-                AnosExperiencia = anosExperiencia
-            };
-
-            _context.TalentoSkills.Add(talentoSkill);
-            await _context.SaveChangesAsync();
-
-            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
-            if (userIdClaim != null)
-                await _registoService.RegistarAsync(int.Parse(userIdClaim.Value), $"Skill (ID {idSkill}) adicionada ao talento (ID {idTalento}) com {anosExperiencia} anos de experiência.");
-
-            TempData["Sucesso"] = "Skill adicionada com sucesso!";
             return RedirectToAction(nameof(Gerir), new { id = idTalento });
         }
 
@@ -87,21 +74,20 @@ namespace TalentosIT.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Editar(int idTalento, int idSkill, int anosExperiencia)
         {
-            if (anosExperiencia < 0)
+            try
             {
-                TempData["Erro"] = "Os anos de experiência não podem ser negativos.";
-                return RedirectToAction(nameof(Gerir), new { id = idTalento });
+                await _skillsService.EditarSkill(idTalento, idSkill, anosExperiencia);
+                TempData["Sucesso"] = "Anos de experiência atualizados.";
+            }
+            catch (BusinessException e)
+            {
+                TempData[e.Property] = e.Message;
+            }
+            catch (NotFoundException)
+            {
+                return NotFound();
             }
 
-            var talentoSkill = await _context.TalentoSkills
-                .FirstOrDefaultAsync(ts => ts.IdTalento == idTalento && ts.IdSkill == idSkill);
-
-            if (talentoSkill == null) return NotFound();
-
-            talentoSkill.AnosExperiencia = anosExperiencia;
-            await _context.SaveChangesAsync();
-
-            TempData["Sucesso"] = "Anos de experiência atualizados.";
             return RedirectToAction(nameof(Gerir), new { id = idTalento });
         }
 
@@ -110,19 +96,15 @@ namespace TalentosIT.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Remover(int idTalento, int idSkill)
         {
-            var talentoSkill = await _context.TalentoSkills
-                .FirstOrDefaultAsync(ts => ts.IdTalento == idTalento && ts.IdSkill == idSkill);
-
-            if (talentoSkill != null)
+            try
             {
-                _context.TalentoSkills.Remove(talentoSkill);
-                await _context.SaveChangesAsync();
-
-                var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
-                if (userIdClaim != null)
-                    await _registoService.RegistarAsync(int.Parse(userIdClaim.Value), $"Skill (ID {idSkill}) removida do talento (ID {idTalento}).");
-
+                int? userId = GetUserId();
+                await _skillsService.RemoverSkill(idTalento, idSkill, userId);
                 TempData["Sucesso"] = "Skill removida do perfil.";
+            }
+            catch (NotFoundException)
+            {
+                return NotFound();
             }
 
             return RedirectToAction(nameof(Gerir), new { id = idTalento });

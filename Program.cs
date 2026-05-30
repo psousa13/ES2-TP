@@ -27,6 +27,8 @@ builder.Services.AddScoped<PropostaTrabalhoService>();
 builder.Services.AddScoped<IContaService, ContaService>();
 builder.Services.AddScoped<RegistoAtividadeService>();
 builder.Services.AddScoped<RelatorioPrecoService>();
+builder.Services.AddScoped<TalentoSkillsService>();
+builder.Services.AddScoped<TalentoExperienciasService>();
 
 builder.Services.AddScoped<IMatchingRule, ProposalHasSkillsMatchingRule>();
 builder.Services.AddScoped<IMatchingRule, SkillMatchingRule>();
