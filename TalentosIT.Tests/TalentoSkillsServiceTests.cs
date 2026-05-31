@@ -37,7 +37,13 @@ namespace TalentosIT.Tests.Services
         public async Task GetSkillsDisponiveis()
         {
             // Arrange
-            var talento = CriarTalento();
+            var talento = new Talento
+            {
+                IdTalento = 1,
+                PrimeiroNome = "Maria", Apelido = "Maria",
+                Email = "mariamaria@gmail.com", Pais = "Portugal",
+                PrecoHora = 10.00, Categoria = "Developer"
+            };
             var skill1 = new Skill { IdSkill = 1, Nome = "C#" };
             var skill2 = new Skill { IdSkill = 2, Nome = "Java" };
             var skill3 = new Skill { IdSkill = 3, Nome = "SQL" };
@@ -120,17 +126,6 @@ namespace TalentosIT.Tests.Services
             // Assert
             var existe = await _context.TalentoSkills.AnyAsync(ts => ts.IdTalento == 2 && ts.IdSkill == 20);
             Assert.That(existe, Is.False);
-        }
-
-        private Talento CriarTalento()
-        {
-            return new Talento
-            {
-                IdTalento = 1,
-                PrimeiroNome = "Maria", Apelido = "Maria",
-                Email = "mariamaria@gmail.com", Pais = "Portugal",
-                PrecoHora = 10.00, Categoria = "Developer"
-            };
         }
     }
 }
