@@ -1,8 +1,10 @@
-Microsoft Visual Studio Solution File, Format Version 12.00
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TalentosIT.Web", "TalentosIT.Web.csproj", "{EDABCEE7-BAB5-8791-2846-27626C8993AA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TalentosIT.UITests", "..\TalentosIT.UITests\TalentosIT.UITests.csproj", "{11115955-A47D-48ED-8C3D-A611DB862C1A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -14,6 +16,10 @@ Global
 		{EDABCEE7-BAB5-8791-2846-27626C8993AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EDABCEE7-BAB5-8791-2846-27626C8993AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EDABCEE7-BAB5-8791-2846-27626C8993AA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{11115955-A47D-48ED-8C3D-A611DB862C1A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{11115955-A47D-48ED-8C3D-A611DB862C1A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{11115955-A47D-48ED-8C3D-A611DB862C1A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{11115955-A47D-48ED-8C3D-A611DB862C1A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
