@@ -1,25 +1,46 @@
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Npgsql;
+using TalentosIT.Web.Models;
+using TalentosIT.Web.Services;
+using TalentosIT.Web.Services.Matching;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddDbContext<TalentosIT.Web.Models.TalentosItContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Add services to the container.
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
+dataSourceBuilder.MapEnum<TipoUtilizador>("tipo_utilizador");
+var dataSource = dataSourceBuilder.Build();
+
+builder.Services.AddDbContext<TalentosIT.Web.Models.TalentosItContext>(options => options.UseNpgsql(dataSource));
+
 builder.Services.AddControllersWithViews();
 
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(options =>
-{
-    options.LoginPath = "/Login";
-});
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(options => options.LoginPath = "/Login");
+
+builder.Services.AddScoped<UtilizadoresService>();
+builder.Services.AddScoped<TalentosService>();
+builder.Services.AddScoped<SkillsService>();
+builder.Services.AddScoped<ClientesService>();
+builder.Services.AddScoped<PropostaTrabalhoService>();
+builder.Services.AddScoped<IContaService, ContaService>();
+builder.Services.AddScoped<RegistoAtividadeService>();
+builder.Services.AddScoped<RelatorioPrecoService>();
+builder.Services.AddScoped<TalentoSkillsService>();
+builder.Services.AddScoped<TalentoExperienciasService>();
+
+builder.Services.AddScoped<IMatchingRule, ProposalHasSkillsMatchingRule>();
+builder.Services.AddScoped<IMatchingRule, SkillMatchingRule>();
+builder.Services.AddScoped<IMatchingRule, ExperienceMatchingRule>();
+builder.Services.AddScoped<IMatchingRule, CategoryMatchingRule>();
+builder.Services.AddScoped<MatchingEngine>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 

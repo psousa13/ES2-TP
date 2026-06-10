@@ -1,0 +1,122 @@
+@model TalentosIT.Web.Models.Talento
+
+@{
+    var talento = (TalentosIT.Web.Models.Talento)ViewData["Talento"]!;
+    ViewData["Title"] = $"Gerir Skills — {talento.PrimeiroNome} {talento.Apelido}";
+}
+
+<h2>Gerir Skills do Perfil</h2>
+<h5 class="text-muted mb-4">@talento.PrimeiroNome @talento.Apelido</h5>
+
+@if (TempData["Sucesso"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["Sucesso"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Aviso"] != null)
+{
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        @TempData["Aviso"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Erro"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["Erro"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@* ── Skills já associadas ── *@
+<h5 class="mt-3">Skills associadas</h5>
+
+@if (!Model.TalentoSkills.Any())
+{
+    <p class="text-muted">Nenhuma skill associada ainda.</p>
+}
+else
+{
+    <table class="table table-bordered table-sm w-75">
+        <thead class="table-light">
+            <tr>
+                <th>Skill</th>
+                <th>Área Profissional</th>
+                <th style="width:160px">Anos de Experiência</th>
+                <th style="width:120px"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var ts in Model.TalentoSkills.OrderBy(ts => ts.IdSkillNavigation?.Nome))
+            {
+                <tr>
+                    <td>@ts.IdSkillNavigation?.Nome</td>
+                    <td>@(ts.IdSkillNavigation?.AreaProfissional ?? "—")</td>
+                    <td>
+                        @* Inline edit form *@
+                        <form asp-controller="TalentoSkills" asp-action="Editar" method="post" class="d-flex gap-1">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="idTalento" value="@Model.IdTalento" />
+                            <input type="hidden" name="idSkill" value="@ts.IdSkill" />
+                            <input type="number" name="anosExperiencia" value="@ts.AnosExperiencia"
+                                   min="0" max="50" class="form-control form-control-sm" style="width:80px" required />
+                            <button type="submit" class="btn btn-sm btn-outline-primary" title="Guardar">✓</button>
+                        </form>
+                    </td>
+                    <td>
+                        <form asp-controller="TalentoSkills" asp-action="Remover" method="post"
+                              onsubmit="return confirm('Remover esta skill do perfil?')">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="idTalento" value="@Model.IdTalento" />
+                            <input type="hidden" name="idSkill" value="@ts.IdSkill" />
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Remover</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@* ── Adicionar nova skill ── *@
+<h5 class="mt-4">Adicionar nova skill</h5>
+
+@if (!ViewData.ContainsKey("IdSkill") || ((Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["IdSkill"]!).Count() == 0)
+{
+    <p class="text-muted">Todas as skills disponíveis já estão associadas a este perfil.</p>
+}
+else
+{
+    <form asp-controller="TalentoSkills" asp-action="Adicionar" method="post" class="row g-3 align-items-end w-75">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="idTalento" value="@Model.IdTalento" />
+
+        <div class="col-md-5">
+            <label class="form-label fw-semibold">Skill</label>
+            <select name="idSkill" class="form-select" required>
+                <option value="">— Selecione uma skill —</option>
+                @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["IdSkill"]!)
+                {
+                    <option value="@item.Value">@item.Text</option>
+                }
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label fw-semibold">Anos de Experiência</label>
+            <input type="number" name="anosExperiencia" min="0" max="50" value="0"
+                   class="form-control" required />
+        </div>
+
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-success w-100">Adicionar</button>
+        </div>
+    </form>
+}
+
+<div class="mt-4">
+    <a asp-controller="Talentos" asp-action="Details" asp-route-id="@Model.IdTalento"
+       class="btn btn-secondary">← Voltar ao Perfil</a>
+</div>

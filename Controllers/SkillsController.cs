@@ -1,151 +1,115 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using TalentosIT.Web.Exceptions;
 using TalentosIT.Web.Models;
+using TalentosIT.Web.Services;
 
 namespace TalentosIT.Web.Controllers
 {
     public class SkillsController : Controller
     {
-        private readonly TalentosItContext _context;
+        private readonly SkillsService _service;
 
-        public SkillsController(TalentosItContext context)
+        public SkillsController(SkillsService service)
         {
-            _context = context;
+            _service = service;
         }
 
-        // GET: Skills
+        // GET: Skills — visible to all authenticated users
+        [Authorize]
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Skills.ToListAsync());
+            return View(await _service.GetSkills());
         }
 
         // GET: Skills/Details/5
-        public async Task<IActionResult> Details(int? id)
+        [Authorize]
+        public Task<IActionResult> Details(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var skill = await _context.Skills
-                .FirstOrDefaultAsync(m => m.IdSkill == id);
-            if (skill == null)
-            {
-                return NotFound();
-            }
-
-            return View(skill);
+            return GetSkillOrNotFound(id);
         }
 
-        // GET: Skills/Create
+        // GET: Skills/Create - admin only
+        [Authorize(Roles = "Admin")]
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: Skills/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // POST: Skills/Create - Admin only
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create([Bind("IdSkill,Nome,AreaProfissional")] Skill skill)
         {
-            if (ModelState.IsValid)
-            {
-                _context.Add(skill);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(skill);
-        }
-
-        // GET: Skills/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var skill = await _context.Skills.FindAsync(id);
-            if (skill == null)
-            {
-                return NotFound();
-            }
-            return View(skill);
-        }
-
-        // POST: Skills/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("IdSkill,Nome,AreaProfissional")] Skill skill)
-        {
-            if (id != skill.IdSkill)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(skill);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!SkillExists(skill.IdSkill))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            return View(skill);
-        }
-
-        // GET: Skills/Delete/5
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var skill = await _context.Skills
-                .FirstOrDefaultAsync(m => m.IdSkill == id);
-            if (skill == null)
-            {
-                return NotFound();
-            }
-
-            return View(skill);
-        }
-
-        // POST: Skills/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var skill = await _context.Skills.FindAsync(id);
-            if (skill != null)
-            {
-                _context.Skills.Remove(skill);
-            }
-
-            await _context.SaveChangesAsync();
+            if (!ModelState.IsValid) return View(skill);
+            await _service.Criar(skill);
             return RedirectToAction(nameof(Index));
         }
 
-        private bool SkillExists(int id)
+        // GET: Skills/Edit/5 — admin only
+        [Authorize(Roles = "Admin")]
+        public Task<IActionResult> Edit(int? id)
         {
-            return _context.Skills.Any(e => e.IdSkill == id);
+            return GetSkillOrNotFound(id);
+        }
+
+        // POST: Skills/Edit/5 — admin only
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Edit(int id, [Bind("IdSkill,Nome,AreaProfissional")] Skill skill)
+        {
+            if (id != skill.IdSkill) return NotFound();
+            if (!ModelState.IsValid) return View(skill);
+
+            try
+            {
+                await _service.Editar(skill);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!_service.Existe(skill.IdSkill)) return NotFound();
+                throw;
+            }
+            return RedirectToAction(nameof(Index));
+        }
+
+        // GET: Skills/Delete/5 — admin only
+        [Authorize(Roles = "Admin")]
+        public Task<IActionResult> Delete(int? id)
+        {
+            return GetSkillOrNotFound(id);
+        }
+
+        // POST: Skills/Delete/5 — admin only
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            var skill = await _service.GetSkill(id);
+            if (skill == null) return RedirectToAction(nameof(Index));
+
+            try
+            {
+                await _service.Eliminar(id);
+            }
+            catch (ObjectInUseException)
+            {
+                TempData["Erro"] = "Esta skill não pode ser eliminada pois está associada a talentos ou propostas.";
+                return View(id);
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        private async Task<IActionResult> GetSkillOrNotFound(int? id)
+        {
+            var skill = await _service.GetSkill(id);
+            if (skill == null) return NotFound();
+            return View(skill);
         }
     }
 }

@@ -1,0 +1,121 @@
+@model TalentosIT.Web.Models.PropostaTrabalho
+
+@{
+    var proposta = (TalentosIT.Web.Models.PropostaTrabalho)ViewData["Proposta"]!;
+    ViewData["Title"] = $"Skills da Proposta — {proposta.Titulo}";
+}
+
+<h2>Gerir Skills Exigidas</h2>
+<h5 class="text-muted mb-1">@proposta.Titulo</h5>
+<p class="text-muted mb-4">Cliente: @proposta.IdClienteNavigation?.PrimeiroNome @proposta.IdClienteNavigation?.Apelido</p>
+
+@if (TempData["Sucesso"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["Sucesso"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Aviso"] != null)
+{
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        @TempData["Aviso"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Erro"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["Erro"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<h5 class="mt-3">Skills exigidas</h5>
+
+@if (!Model.PropostaSkills.Any())
+{
+    <p class="text-muted">Nenhuma skill exigida definida ainda.</p>
+}
+else
+{
+    <table class="table table-bordered table-sm w-75">
+        <thead class="table-light">
+            <tr>
+                <th>Skill</th>
+                <th>Área Profissional</th>
+                <th style="width:220px">Mínimo de Anos de Experiência</th>
+                <th style="width:120px"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var ps in Model.PropostaSkills.OrderBy(ps => ps.IdSkillNavigation?.Nome))
+            {
+                <tr>
+                    <td>@ps.IdSkillNavigation?.Nome</td>
+                    <td>@(ps.IdSkillNavigation?.AreaProfissional ?? "—")</td>
+                    <td>
+                        <form asp-controller="PropostaSkills" asp-action="Editar" method="post" class="d-flex gap-1">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="idProposta" value="@Model.IdProposta" />
+                            <input type="hidden" name="idSkill" value="@ps.IdSkill" />
+                            <input type="number" name="anosMinimosExperiencia" value="@ps.AnosMinimosExperiencia"
+                                   min="0" max="50" class="form-control form-control-sm" style="width:80px" required />
+                            <button type="submit" class="btn btn-sm btn-outline-primary" title="Guardar">✓</button>
+                        </form>
+                    </td>
+                    <td>
+                        <form asp-controller="PropostaSkills" asp-action="Remover" method="post"
+                              onsubmit="return confirm('Remover esta skill da proposta?')">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="idProposta" value="@Model.IdProposta" />
+                            <input type="hidden" name="idSkill" value="@ps.IdSkill" />
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Remover</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<h5 class="mt-4">Adicionar skill exigida</h5>
+
+@if (!((Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["IdSkill"]!).Any())
+{
+    <p class="text-muted">Todas as skills disponíveis já estão associadas a esta proposta.</p>
+}
+else
+{
+    <form asp-controller="PropostaSkills" asp-action="Adicionar" method="post" class="row g-3 align-items-end w-75">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="idProposta" value="@Model.IdProposta" />
+
+        <div class="col-md-5">
+            <label class="form-label fw-semibold">Skill</label>
+            <select name="idSkill" class="form-select" required>
+                <option value="">— Selecione uma skill —</option>
+                @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["IdSkill"]!)
+                {
+                    <option value="@item.Value">@item.Text</option>
+                }
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label fw-semibold">Mínimo de Anos de Experiência</label>
+            <input type="number" name="anosMinimosExperiencia" min="0" max="50" value="0"
+                   class="form-control" required />
+        </div>
+
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-success w-100">Adicionar</button>
+        </div>
+    </form>
+}
+
+<div class="mt-4">
+    @* FIX: back button now points to PropostaTrabalho/Details  *@
+    <a asp-controller="PropostaTrabalho" asp-action="Details" asp-route-id="@Model.IdProposta"
+       class="btn btn-secondary">← Voltar à Proposta</a>
+</div>

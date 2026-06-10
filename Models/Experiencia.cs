@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace TalentosIT.Web.Models;
 
-public partial class Experiencium
+public partial class Experiencia
 {
     public int IdExperiencia { get; set; }
 
@@ -17,5 +17,5 @@ public partial class Experiencium
 
     public int? AnoFim { get; set; }
 
-    public virtual Talento IdTalentoNavigation { get; set; } = null!;
+    public virtual Talento? IdTalentoNavigation { get; set; }
 }

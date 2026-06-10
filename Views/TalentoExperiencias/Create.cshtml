@@ -1,0 +1,52 @@
+@model TalentosIT.Web.Models.Experiencia
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+@{
+    ViewData["Title"] = "Criar Experiência";
+    var talento = (TalentosIT.Web.Models.Talento)ViewData["Talento"]!;
+}
+
+<h1>Criar Experiência</h1>
+<p class="text-muted mb-4">@talento.PrimeiroNome @talento.Apelido</p>
+
+<div class="row">
+    <div class="col-md-5">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="mb-3">
+                <label asp-for="Titulo" class="control-label">Título</label>
+                <input asp-for="Titulo" class="form-control" />
+                <span asp-validation-for="Titulo" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Empresa" class="control-label"></label>
+                <input asp-for="Empresa" class="form-control" />
+                <span asp-validation-for="Empresa" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="AnoInicio" class="form-label">Ano de Início</label>
+                <input asp-for="AnoInicio" class="form-control" type="number" step="1" min="1900" max="2999" />
+                <span asp-validation-for="AnoInicio" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="AnoFim" class="form-label">Ano de Fim</label>
+                <input asp-for="AnoFim" class="form-control" type="number" step="1" min="1900" max="2999" />
+                <span asp-validation-for="AnoFim" class="text-danger"></span>
+            </div>
+
+            <input type="hidden" asp-for="IdTalento" value="@talento.IdTalento"/>
+
+            <div class="form-group">
+                <input type="submit" value="Criar" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

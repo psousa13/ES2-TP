@@ -23,9 +23,9 @@ public partial class Talento
 
     public string? Categoria { get; set; }
 
-    public bool? Publico { get; set; }
+    public bool Publico { get; set; }
 
-    public virtual ICollection<Experiencium> Experiencia { get; set; } = new List<Experiencium>();
+    public virtual ICollection<Experiencia> Experiencia { get; set; } = new List<Experiencia>();
 
     public virtual Utilizador IdUtilizadorNavigation { get; set; } = null!;
 

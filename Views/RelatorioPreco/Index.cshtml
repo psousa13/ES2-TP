@@ -1,0 +1,44 @@
+@using TalentosIT.Web.ViewModels
+@model RelatorioViewModel
+
+@{
+    ViewData["Title"] = "Relatórios";
+}
+
+<h1>Preços Médios Mensais</h1>
+
+<form method="get">
+
+    <div class="mb-3">
+        <label class="form-label">Agrupar por</label>
+
+        <select name="tipo" class="form-select" onchange="this.form.submit()" asp-items="Model.Opcoes"></select>
+    </div>
+</form>
+
+@if (Model.Tipo == TipoRelatorio.None) {
+    <p>Por favor seleciona uma forma de agrupamento.</p>
+} else if (!Model.Resultados.Any()) {
+    <p>Não há resultados.</p>
+} else {
+    <table class="table table-striped">
+
+    <thead>
+        <tr>
+            <th>Grupo</th>
+            <th>Preço Médio Mensal</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        @foreach (var item in Model.Resultados)
+        {
+            <tr>
+                <td>@item.Grupo</td>
+
+                <td>@item.PrecoMensal.ToString()</td>
+            </tr>
+        }
+    </tbody>
+</table>
+}

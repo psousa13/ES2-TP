@@ -1,0 +1,58 @@
+@model TalentosIT.Web.DTO.CreatePropostaDTO
+@{
+    ViewData["Title"] = "Nova Proposta de Trabalho";
+    var showClientePicker = ViewData["ShowClientePicker"] as bool? == true;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Nova Proposta de Trabalho</h1>
+    <a asp-action="Index" class="btn btn-outline-secondary">← Voltar</a>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+            @if (showClientePicker)
+            {
+                <div class="mb-3">
+                    <label asp-for="IdCliente" class="form-label">Cliente / Empresa</label>
+                    <select asp-for="IdCliente" class="form-select" asp-items="ViewBag.IdCliente">
+                        <option value="">— Selecione um cliente —</option>
+                    </select>
+                    <span asp-validation-for="IdCliente" class="text-danger"></span>
+                </div>
+            }
+
+            <div class="mb-3">
+                <label asp-for="Titulo" class="form-label">Título da Vaga</label>
+                <input asp-for="Titulo" class="form-control" placeholder="ex: Desenvolvedor Backend .NET" />
+                <span asp-validation-for="Titulo" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Categoria" class="form-label">Área / Categoria</label>
+                <input asp-for="Categoria" class="form-control" placeholder="ex: Developer, Designer..." />
+                <span asp-validation-for="Categoria" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="HorasTotais" class="form-label">Total de Horas Previstas</label>
+                <input asp-for="HorasTotais" class="form-control" type="number" min="1" />
+                <span asp-validation-for="HorasTotais" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Descricao" class="form-label">Descrição</label>
+                <textarea asp-for="Descricao" class="form-control" rows="4" placeholder="Descreva o projeto e os requisitos..."></textarea>
+                <span asp-validation-for="Descricao" class="text-danger"></span>
+            </div>
+            <div class="d-flex gap-2">
+                <input type="submit" value="Criar Proposta" class="btn btn-primary" />
+                <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

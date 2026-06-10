@@ -1,45 +1,38 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using TalentosIT.Web.DTO;
+using TalentosIT.Web.Exceptions;
 using TalentosIT.Web.Models;
+using TalentosIT.Web.Services;
+using System.Security.Claims;
 
 namespace TalentosIT.Web.Controllers
 {
+    [Authorize(Roles = "Admin,GestorUtilizadores")]
     public class UtilizadoresController : Controller
     {
-        private readonly TalentosItContext _context;
+        private readonly UtilizadoresService _service;
+        private readonly RegistoAtividadeService _registoService;
 
-        public UtilizadoresController(TalentosItContext context)
+        public UtilizadoresController(
+            UtilizadoresService service,
+            RegistoAtividadeService registoService)
         {
-            _context = context;
+            _service = service;
+            _registoService = registoService;
         }
 
         // GET: Utilizadores
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Utilizadors.ToListAsync());
+            return View(await _service.GetUtilizadores());
         }
 
         // GET: Utilizadores/Details/5
-        public async Task<IActionResult> Details(int? id)
+        public Task<IActionResult> Details(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var utilizador = await _context.Utilizadors
-                .FirstOrDefaultAsync(m => m.IdUtilizador == id);
-            if (utilizador == null)
-            {
-                return NotFound();
-            }
-
-            return View(utilizador);
+            return GetUtilizadorOrNotFound(id);
         }
 
         // GET: Utilizadores/Create
@@ -49,88 +42,146 @@ namespace TalentosIT.Web.Controllers
         }
 
         // POST: Utilizadores/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("IdUtilizador,PrimeiroNome,Apelido,Email,Telefone,PalavraPasse,Ativo")] Utilizador utilizador)
+        public async Task<IActionResult> Create([Bind("PrimeiroNome,Apelido,Email,Telefone,PalavraPasse,TipoUtilizador")] CreateUtilizadorDTO dto)
         {
-            if (ModelState.IsValid)
+            if (User.IsInRole("GestorUtilizadores") && dto.TipoUtilizador == TipoUtilizador.Admin)
             {
-                _context.Add(utilizador);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                ModelState.AddModelError("TipoUtilizador", "Um gestor não pode criar administradores.");
             }
-            return View(utilizador);
+
+            if (!ModelState.IsValid) return View(dto);
+
+            try
+            {
+                await _service.Criar(dto);
+
+                var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+                await _registoService.RegistarAsync(
+                    currentUserId,
+                    $"Utilizador criado: {dto.Email}. Tipo: {dto.TipoUtilizador}."
+                );
+            }
+            catch (AlreadyRegisteredException)
+            {
+                ModelState.AddModelError("Email", "Email já registado.");
+                return View(dto);
+            }
+
+            return RedirectToAction(nameof(Index));
         }
 
         // GET: Utilizadores/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null)
+            var utilizador = await _service.GetUtilizador(id);
+
+            if (utilizador == null) return NotFound();
+
+            if (User.IsInRole("GestorUtilizadores") &&
+                utilizador.TipoUtilizador == TipoUtilizador.Admin)
             {
-                return NotFound();
+                return Forbid();
             }
 
-            var utilizador = await _context.Utilizadors.FindAsync(id);
-            if (utilizador == null)
+            var dto = new EditUtilizadorDTO
             {
-                return NotFound();
-            }
-            return View(utilizador);
+                IdUtilizador = utilizador.IdUtilizador,
+                PrimeiroNome = utilizador.PrimeiroNome,
+                Apelido = utilizador.Apelido,
+                Email = utilizador.Email,
+                Telefone = utilizador.Telefone,
+                TipoUtilizador = utilizador.TipoUtilizador,
+                Ativo = utilizador.Ativo
+            };
+
+            return View(dto);
         }
 
+        
         // POST: Utilizadores/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("IdUtilizador,PrimeiroNome,Apelido,Email,Telefone,PalavraPasse,Ativo")] Utilizador utilizador)
+        public async Task<IActionResult> Edit(int id, [Bind("IdUtilizador,PrimeiroNome,Apelido,Email,Telefone,TipoUtilizador,Ativo")] EditUtilizadorDTO dto)
         {
-            if (id != utilizador.IdUtilizador)
+            if (id != dto.IdUtilizador) return NotFound();
+
+            var utilizadorAtual = await _service.GetUtilizador(dto.IdUtilizador);
+
+            if (utilizadorAtual == null) return NotFound();
+
+            if (User.IsInRole("GestorUtilizadores") &&
+                utilizadorAtual.TipoUtilizador == TipoUtilizador.Admin)
             {
-                return NotFound();
+                return Forbid();
             }
 
-            if (ModelState.IsValid)
+            if (User.IsInRole("GestorUtilizadores") && dto.TipoUtilizador == TipoUtilizador.Admin)
             {
-                try
-                {
-                    _context.Update(utilizador);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!UtilizadorExists(utilizador.IdUtilizador))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
+                ModelState.AddModelError("TipoUtilizador", "Um gestor não pode promover utilizadores a administrador.");
             }
-            return View(utilizador);
+
+            if (!ModelState.IsValid) return View(dto);
+
+            try
+            {
+                await _service.Editar(id, dto);
+
+                var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+                await _registoService.RegistarAsync(
+                    currentUserId,
+                    $"Utilizador (ID {dto.IdUtilizador}) editado. Novo tipo: {dto.TipoUtilizador}. Ativo: {dto.Ativo}."
+                );
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!await _service.Existe(dto.IdUtilizador)) return NotFound();
+                throw;
+            }
+
+            return RedirectToAction(nameof(Index));
         }
 
-        // GET: Utilizadores/Delete/5
-        public async Task<IActionResult> Delete(int? id)
+        // POST: Utilizadores/Desativar/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Desativar(int id)
         {
-            if (id == null)
+            var utilizador = await _service.GetUtilizador(id);
+
+            if (utilizador == null) return NotFound();
+
+            if (User.IsInRole("GestorUtilizadores") &&
+                utilizador.TipoUtilizador == TipoUtilizador.Admin)
             {
-                return NotFound();
+                return Forbid();
             }
 
-            var utilizador = await _context.Utilizadors
-                .FirstOrDefaultAsync(m => m.IdUtilizador == id);
-            if (utilizador == null)
+            var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+            if (utilizador.IdUtilizador == currentUserId)
             {
-                return NotFound();
+                TempData["Erro"] = "Não pode desativar a sua própria conta.";
+                return RedirectToAction(nameof(Index));
             }
 
-            return View(utilizador);
+            await _service.Desativar(id);
+
+            await _registoService.RegistarAsync(
+                currentUserId,
+                $"Conta do utilizador (ID {utilizador.IdUtilizador}) desativada."
+            );
+
+            return RedirectToAction(nameof(Index));
+        }
+        
+        // GET: Utilizadores/Delete/5
+        public Task<IActionResult> Delete(int? id)
+        {
+            return GetUtilizadorOrNotFound(id);
         }
 
         // POST: Utilizadores/Delete/5
@@ -138,19 +189,16 @@ namespace TalentosIT.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var utilizador = await _context.Utilizadors.FindAsync(id);
-            if (utilizador != null)
-            {
-                _context.Utilizadors.Remove(utilizador);
-            }
-
-            await _context.SaveChangesAsync();
+            await _service.Eliminar(id);
             return RedirectToAction(nameof(Index));
         }
 
-        private bool UtilizadorExists(int id)
+        private async Task<IActionResult> GetUtilizadorOrNotFound(int? id)
         {
-            return _context.Utilizadors.Any(e => e.IdUtilizador == id);
+            Utilizador? utilizador = await _service.GetUtilizador(id);
+            if (utilizador == null) return NotFound();
+
+            return View(utilizador);
         }
     }
 }

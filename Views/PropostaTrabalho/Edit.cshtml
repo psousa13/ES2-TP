@@ -1,0 +1,53 @@
+@model TalentosIT.Web.DTO.EditPropostaDTO
+@{
+    ViewData["Title"] = "Editar Proposta";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Editar Proposta</h1>
+    <a asp-action="Index" class="btn btn-outline-secondary">← Voltar</a>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+            <input type="hidden" asp-for="IdProposta" />
+            <input type="hidden" asp-for="IdUtilizador" />
+            <div class="mb-3">
+                <label asp-for="IdCliente" class="form-label">Cliente / Empresa</label>
+                <select asp-for="IdCliente" class="form-select" asp-items="ViewBag.IdCliente"></select>
+                <span asp-validation-for="IdCliente" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Titulo" class="form-label">Título da Vaga</label>
+                <input asp-for="Titulo" class="form-control" />
+                <span asp-validation-for="Titulo" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Categoria" class="form-label">Área / Categoria</label>
+                <input asp-for="Categoria" class="form-control" />
+                <span asp-validation-for="Categoria" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="HorasTotais" class="form-label">Total de Horas Previstas</label>
+                <input asp-for="HorasTotais" class="form-control" type="number" min="1" />
+                <span asp-validation-for="HorasTotais" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Descricao" class="form-label">Descrição</label>
+                <textarea asp-for="Descricao" class="form-control" rows="4"></textarea>
+                <span asp-validation-for="Descricao" class="text-danger"></span>
+            </div>
+            <div class="d-flex gap-2">
+                <input type="submit" value="Guardar Alterações" class="btn btn-primary" />
+                <a asp-controller="PropostaSkills" asp-action="Gerir" asp-route-id="@Model.IdProposta" class="btn btn-success">Gerir Skills</a>
+                <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

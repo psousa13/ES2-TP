@@ -1,182 +1,164 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using TalentosIT.Web.Models;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using TalentosIT.Web.DTO;
+using TalentosIT.Web.Exceptions;
+using TalentosIT.Web.Models;
+using TalentosIT.Web.Services;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace TalentosIT.Web.Controllers
 {
+    [Authorize(Roles = "Admin")]
     public class ClientesController : Controller
     {
-        private readonly TalentosItContext _context;
+        private readonly ClientesService _service;
 
-        public ClientesController(TalentosItContext context)
+        public ClientesController(ClientesService service)
         {
-            _context = context;
+            _service = service;
         }
 
+        private int GetUserId() => int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        private bool IsAdmin() => User.IsInRole("Admin");
+
         // GET: Clientes
-        [Authorize]
         public async Task<IActionResult> Index()
         {
-            String? idUtilizador = User.FindFirst("IdUtilizador").Value;
-            if (idUtilizador == null)
-            {
-                return Unauthorized();
-            }
-            var talentosItContext = _context.Clientes
-                .Where(c => c.IdUtilizador == int.Parse(idUtilizador))
-                .Include(c => c.IdUtilizadorNavigation);
-            return View(await talentosItContext.ToListAsync());
+            var clientes = await _service.GetClientes(GetUserId(), IsAdmin());
+            return View(clientes);
         }
 
         // GET: Clientes/Details/5
-        [Authorize]
         public async Task<IActionResult> Details(int? id)
         {
-            if (id == null)
+            try
             {
-                return NotFound();
+                var cliente = await _service.GetCliente(id, GetUserId(), IsAdmin());
+                if (cliente == null) return NotFound();
+                return View(cliente);
             }
-
-            var cliente = await _context.Clientes
-                .Include(c => c.IdUtilizadorNavigation)
-                .FirstOrDefaultAsync(m => m.IdCliente == id);
-            if (cliente == null)
+            catch (NoPermissionException)
             {
-                return NotFound();
+                return Forbid();
             }
-
-            return View(cliente);
         }
 
         // GET: Clientes/Create
-        [Authorize]
-        public IActionResult Create()
-        {
-            ViewData["IdUtilizador"] = new SelectList(_context.Utilizadors, "IdUtilizador", "IdUtilizador");
-            return View();
-        }
+        public IActionResult Create() => View();
 
         // POST: Clientes/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize]
-        public async Task<IActionResult> Create([Bind("IdCliente,IdUtilizador,PrimeiroNome,Apelido,Email,Telefone,Rua,NumPorta,Cidade,Pais")] Cliente cliente)
+        public async Task<IActionResult> Create([Bind("PrimeiroNome,Apelido,Email,Telefone,Rua,NumPorta,Cidade,Pais")] CreateClienteDTO dto)
         {
-            if (ModelState.IsValid)
-            {
-                String? idUtilizador = User.FindFirst("IdUtilizador")?.Value;
-                if (idUtilizador == null)
-                {
-                    return Unauthorized();
-                }
-                cliente.IdUtilizador = int.Parse(idUtilizador);
+            if (!ModelState.IsValid) return View(dto);
 
-                _context.Add(cliente);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["IdUtilizador"] = new SelectList(_context.Utilizadors, "IdUtilizador", "IdUtilizador", cliente.IdUtilizador);
-            return View(cliente);
+            dto.IdUtilizador = GetUserId();
+            await _service.Criar(dto);
+            return RedirectToAction(nameof(Index));
         }
 
         // GET: Clientes/Edit/5
-        [Authorize]
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null)
+            try
             {
+                var cliente = await _service.GetCliente(id, GetUserId(), IsAdmin());
+                EditClienteDTO dto = new()
+                {
+                    IdCliente = cliente.IdCliente,
+                    IdUtilizador = cliente.IdUtilizador,
+                    PrimeiroNome = cliente.PrimeiroNome,
+                    Apelido = cliente.Apelido,
+                    Email = cliente.Email,
+                    Telefone = cliente.Telefone,
+                    Rua = cliente.Rua,
+                    NumPorta = cliente.NumPorta,
+                    Cidade = cliente.Cidade,
+                    Pais = cliente.Pais
+                };
+                return View(dto);
+            }
+            catch (NotFoundException)
+            {
+                if (IsAdmin())
+            {
+                var clientes = await _service.GetClientes(GetUserId(), IsAdmin());
+                ViewData["IdCliente"] = new SelectList(clientes, "IdCliente", "Nome");
+                ViewData["ShowClientePicker"] = true;
+            }
                 return NotFound();
             }
-
-            var cliente = await _context.Clientes.FindAsync(id);
-            if (cliente == null)
+            catch (NoPermissionException)
             {
-                return NotFound();
+                return Forbid();
             }
-            ViewData["IdUtilizador"] = new SelectList(_context.Utilizadors, "IdUtilizador", "IdUtilizador", cliente.IdUtilizador);
-            return View(cliente);
         }
 
         // POST: Clientes/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize]
-        public async Task<IActionResult> Edit(int id, [Bind("IdCliente,IdUtilizador,PrimeiroNome,Apelido,Email,Telefone,Rua,NumPorta,Cidade,Pais")] Cliente cliente)
+        public async Task<IActionResult> Edit(int id, [Bind("IdCliente,IdUtilizador,PrimeiroNome,Apelido,Email,Telefone,Rua,NumPorta,Cidade,Pais")] EditClienteDTO dto)
         {
-            if (id != cliente.IdCliente)
+            if (!ModelState.IsValid) return View(dto);
+
+            try
+            {
+                await _service.Editar(id, dto, GetUserId(), IsAdmin());
+                return RedirectToAction(nameof(Index));
+            }
+            catch (NotFoundException)
             {
                 return NotFound();
             }
-
-            if (ModelState.IsValid)
+            catch (NoPermissionException)
             {
-                try
-                {
-                    _context.Update(cliente);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!ClienteExists(cliente.IdCliente))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
+                return Forbid();
             }
-            ViewData["IdUtilizador"] = new SelectList(_context.Utilizadors, "IdUtilizador", "IdUtilizador", cliente.IdUtilizador);
-            return View(cliente);
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!_service.Existe(id)) return NotFound();
+                throw;
+            }
         }
 
         // GET: Clientes/Delete/5
-        [Authorize]
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null)
+            try
+            {
+                return View(await _service.GetCliente(id, GetUserId(), IsAdmin()));
+            }
+            catch (NotFoundException)
             {
                 return NotFound();
             }
-
-            var cliente = await _context.Clientes
-                .Include(c => c.IdUtilizadorNavigation)
-                .FirstOrDefaultAsync(m => m.IdCliente == id);
-            if (cliente == null)
+            catch (NoPermissionException)
             {
-                return NotFound();
+                return Forbid();
             }
-
-            return View(cliente);
         }
 
         // POST: Clientes/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        [Authorize]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var cliente = await _context.Clientes.FindAsync(id);
-            if (cliente != null)
+            try
             {
-                _context.Clientes.Remove(cliente);
+                await _service.Eliminar(id, GetUserId(), IsAdmin());
+                return RedirectToAction(nameof(Index));
             }
-
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
-
-        private bool ClienteExists(int id)
-        {
-            return _context.Clientes.Any(e => e.IdCliente == id);
+            catch (NotFoundException)
+            {
+                return NotFound();
+            }
+            catch (NoPermissionException)
+            {
+                return Forbid();
+            }
         }
     }
 }

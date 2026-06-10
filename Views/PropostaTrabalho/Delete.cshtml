@@ -1,0 +1,32 @@
+@model TalentosIT.Web.Models.PropostaTrabalho
+@{
+    ViewData["Title"] = "Eliminar Proposta";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Eliminar Proposta</h1>
+    <a asp-action="Index" class="btn btn-outline-secondary">← Voltar</a>
+</div>
+
+<div class="alert alert-danger">
+    <strong>Atenção!</strong> Tem a certeza que pretende eliminar esta proposta?
+</div>
+
+<dl class="row" style="max-width:520px;">
+    <dt class="col-sm-4">Título</dt>
+    <dd class="col-sm-8">@Model.Titulo</dd>
+    <dt class="col-sm-4">Cliente</dt>
+    <dd class="col-sm-8">@Model.IdClienteNavigation?.PrimeiroNome @Model.IdClienteNavigation?.Apelido</dd>
+    <dt class="col-sm-4">Categoria</dt>
+    <dd class="col-sm-8">@(Model.Categoria ?? "—")</dd>
+    <dt class="col-sm-4">Horas</dt>
+    <dd class="col-sm-8">@Model.HorasTotais h</dd>
+</dl>
+
+<form asp-action="Delete">
+    <input type="hidden" asp-for="IdProposta" />
+    <div class="d-flex gap-2">
+        <input type="submit" value="Confirmar Eliminação" class="btn btn-danger" />
+        <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+    </div>
+</form>

@@ -1,41 +1,47 @@
-﻿@model IEnumerable<TalentosIT.Web.Models.Skill>
-
+@model IEnumerable<TalentosIT.Web.Models.Skill>
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Skills";
 }
 
-<h1>Index</h1>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Catálogo de Skills</h1>
+    @if (User.IsInRole("Admin"))
+    {
+        <a asp-action="Create" class="btn btn-primary">+ Nova Skill</a>
+    }
+</div>
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
+@if (TempData["Erro"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["Erro"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<table class="table table-striped">
     <thead>
         <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Nome)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.AreaProfissional)
-            </th>
+            <th>Nome</th>
+            <th>Área Profissional</th>
             <th></th>
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model) {
+    @foreach (var item in Model)
+    {
         <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Nome)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.AreaProfissional)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.IdSkill">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.IdSkill">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.IdSkill">Delete</a>
+            <td>@item.Nome</td>
+            <td>@item.AreaProfissional</td>
+            <td style="white-space:nowrap;">
+                <a asp-action="Details" asp-route-id="@item.IdSkill" class="btn btn-sm btn-info">Detalhes</a>
+                @if (User.IsInRole("Admin"))
+                {
+                    <a asp-action="Edit" asp-route-id="@item.IdSkill" class="btn btn-sm btn-warning ms-1">Editar</a>
+                    <a asp-action="Delete" asp-route-id="@item.IdSkill" class="btn btn-sm btn-danger ms-1">Eliminar</a>
+                }
             </td>
         </tr>
-}
+    }
     </tbody>
 </table>
