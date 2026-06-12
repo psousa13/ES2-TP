@@ -106,12 +106,6 @@ namespace TalentosIT.Web.Controllers
                 return View("IndexClient");
             }
 
-            // Gestor utilizadores
-            if (User.IsInRole("GestorUtilizadores"))
-            {
-                return View();
-            }
-
             // ADMIN: general dashboard with stats
             return View();
         }

@@ -46,7 +46,8 @@ namespace TalentosIT.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("PrimeiroNome,Apelido,Email,Telefone,PalavraPasse,TipoUtilizador")] CreateUtilizadorDTO dto)
         {
-            if (User.IsInRole("GestorUtilizadores") && dto.TipoUtilizador == TipoUtilizador.Admin)
+            if (User.IsInRole("GestorUtilizadores") && 
+                dto.TipoUtilizador == TipoUtilizador.Admin)
             {
                 ModelState.AddModelError("TipoUtilizador", "Um gestor não pode criar administradores.");
             }

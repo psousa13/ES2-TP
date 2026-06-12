@@ -14,11 +14,18 @@
             <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
             <input type="hidden" asp-for="IdProposta" />
             <input type="hidden" asp-for="IdUtilizador" />
-            <div class="mb-3">
-                <label asp-for="IdCliente" class="form-label">Cliente / Empresa</label>
-                <select asp-for="IdCliente" class="form-select" asp-items="ViewBag.IdCliente"></select>
-                <span asp-validation-for="IdCliente" class="text-danger"></span>
-            </div>
+            @if (User.IsInRole("Admin"))
+            {
+                <div class="mb-3">
+                    <label asp-for="IdCliente" class="form-label">Cliente / Empresa</label>
+                    <select asp-for="IdCliente" class="form-select" asp-items="ViewBag.IdCliente"></select>
+                    <span asp-validation-for="IdCliente" class="text-danger"></span>
+                </div>
+            }
+            else
+            {
+                <input type="hidden" asp-for="IdCliente" />
+            }
             <div class="mb-3">
                 <label asp-for="Titulo" class="form-label">Título da Vaga</label>
                 <input asp-for="Titulo" class="form-control" />

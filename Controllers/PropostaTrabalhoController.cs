@@ -35,33 +35,34 @@ namespace TalentosIT.Web.Controllers
         public async Task<IActionResult> Details(int? id)
         {
             var proposta = await _service.GetProposta(id);
-
-            if (proposta == null)
-                return NotFound();
-
+            if (proposta == null) return NotFound();
             return View(proposta);
         }
-        [Authorize(Roles = "GestorUtilizadores,Admin")]
+
+        [Authorize(Roles = "Cliente,Admin")]
         public async Task<IActionResult> Create()
         {
-            if (!IsAdmin()) return View();
-
-            var clientes = await _service.GetClientes(GetUserId(), IsAdmin());
-            ViewData["IdCliente"] = new SelectList(clientes, "IdCliente", "Nome");
-            ViewData["ShowClientePicker"] = true;
+            // Admin sees a client picker; Cliente and GestorUtilizadores create for themselves
+            if (IsAdmin())
+            {
+                var clientes = await _service.GetClientes(GetUserId(), IsAdmin());
+                ViewData["IdCliente"] = new SelectList(clientes, "IdCliente", "Nome");
+                ViewData["ShowClientePicker"] = true;
+            }
             return View();
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "GestorUtilizadores,Admin")]
+        [Authorize(Roles = "Cliente,Admin")]
         public async Task<IActionResult> Create([Bind("IdCliente,Titulo,Categoria,HorasTotais,Descricao")] CreatePropostaDTO dto)
         {
             try
             {
                 await _service.Criar(dto, GetUserId(), IsAdmin());
                 await _registoService.RegistarAsync(GetUserId(), $"Proposta de trabalho criada: \"{dto.Titulo}\".");
-                return RedirectToAction(nameof(Index));
+                var criada = await _service.GetPropostaByTituloEUtilizador(dto.Titulo, GetUserId());
+                return RedirectToAction("Gerir", "PropostaSkills", new { id = criada?.IdProposta });
             }
             catch (NotFoundException)
             {
@@ -70,15 +71,18 @@ namespace TalentosIT.Web.Controllers
             }
         }
 
-        [Authorize(Roles = "GestorUtilizadores,Admin")]
+        [Authorize(Roles = "Cliente,Admin")]
         public async Task<IActionResult> Edit(int? id)
         {
             var proposta = await _service.GetProposta(id);
             if (proposta == null) return NotFound();
-
             if (!IsAdmin() && proposta.IdUtilizador != GetUserId()) return Forbid();
-            var clientes = await _service.GetClientes(GetUserId(), IsAdmin());
-            ViewData["IdCliente"] = new SelectList(clientes, "IdCliente", "Nome", proposta.IdCliente);
+
+            if (IsAdmin())
+            {
+                var clientes = await _service.GetClientes(GetUserId(), IsAdmin());
+                ViewData["IdCliente"] = new SelectList(clientes, "IdCliente", "Nome", proposta.IdCliente);
+            }
 
             EditPropostaDTO dto = new()
             {
@@ -96,15 +100,18 @@ namespace TalentosIT.Web.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "GestorUtilizadores,Admin")]
+        [Authorize(Roles = "Cliente,Admin")]
         public async Task<IActionResult> Edit(
             int id,
             [Bind("IdProposta,IdUtilizador,IdCliente,Titulo,Categoria,HorasTotais,Descricao")] EditPropostaDTO dto)
         {
             if (!ModelState.IsValid)
             {
-                var clientes = await _service.GetClientes(GetUserId(), IsAdmin());
-                ViewData["IdCliente"] = new SelectList(clientes, "IdCliente", "Nome", dto.IdCliente);
+                if (IsAdmin())
+                {
+                    var clientes = await _service.GetClientes(GetUserId(), IsAdmin());
+                    ViewData["IdCliente"] = new SelectList(clientes, "IdCliente", "Nome", dto.IdCliente);
+                }
                 return View(dto);
             }
 
@@ -114,14 +121,8 @@ namespace TalentosIT.Web.Controllers
                 await _registoService.RegistarAsync(GetUserId(), $"Proposta de trabalho (ID {id}) editada: \"{dto.Titulo}\".");
                 return RedirectToAction(nameof(Index));
             }
-            catch (NotFoundException)
-            {
-                return NotFound();
-            }
-            catch (NoPermissionException)
-            {
-                return Forbid();
-            }
+            catch (NotFoundException) { return NotFound(); }
+            catch (NoPermissionException) { return Forbid(); }
             catch (DbUpdateConcurrencyException)
             {
                 if (!await _service.Existe(id)) return NotFound();
@@ -129,7 +130,7 @@ namespace TalentosIT.Web.Controllers
             }
         }
 
-        [Authorize(Roles = "GestorUtilizadores,Admin")]
+        [Authorize(Roles = "Cliente,Admin")]
         public async Task<IActionResult> Delete(int? id)
         {
             var proposta = await _service.GetProposta(id);
@@ -140,10 +141,10 @@ namespace TalentosIT.Web.Controllers
 
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "GestorUtilizadores,Admin")]
+        [Authorize(Roles = "Cliente,Admin")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            PropostaTrabalho? proposta = await _service.GetProposta(id);
+            var proposta = await _service.GetProposta(id);
             if (proposta == null) return NotFound();
             if (!IsAdmin() && proposta.IdUtilizador != GetUserId()) return Forbid();
             await _registoService.RegistarAsync(GetUserId(), $"Proposta de trabalho (ID {id}) \"{proposta.Titulo}\" eliminada.");
@@ -151,7 +152,6 @@ namespace TalentosIT.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: PropostaTrabalho/Elegiveis/5
         public async Task<IActionResult> Elegiveis(int? id)
         {
             var proposta = await _service.GetProposta(id);
@@ -163,10 +163,7 @@ namespace TalentosIT.Web.Controllers
                 ViewData["Proposta"] = proposta;
                 return View(talentosElegiveis);
             }
-            catch (NotFoundException)
-            {
-                return NotFound();
-            }
+            catch (NotFoundException) { return NotFound(); }
             catch (NoSkillsException)
             {
                 ViewData["Aviso"] = "Esta proposta não tem skills exigidas definidas. Adicione skills antes de procurar talentos elegíveis.";
@@ -176,4 +173,3 @@ namespace TalentosIT.Web.Controllers
         }
     }
 }
-

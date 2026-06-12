@@ -47,7 +47,7 @@ namespace TalentosIT.Web.Controllers
         // POST: PropostaSkills/Adicionar
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "GestorUtilizadores,Admin")]
+        [Authorize(Roles = "Cliente,GestorUtilizadores,Admin")]
         public async Task<IActionResult> Adicionar(int idProposta, int idSkill, int anosMinimosExperiencia)
         {
             if (anosMinimosExperiencia < 0)
@@ -86,7 +86,7 @@ namespace TalentosIT.Web.Controllers
         // POST: PropostaSkills/Editar
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "GestorUtilizadores,Admin")]
+        [Authorize(Roles = "Cliente,GestorUtilizadores,Admin")]
         public async Task<IActionResult> Editar(int idProposta, int idSkill, int anosMinimosExperiencia)
         {
             if (anosMinimosExperiencia < 0)
@@ -110,7 +110,7 @@ namespace TalentosIT.Web.Controllers
         // POST: PropostaSkills/Remover
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "GestorUtilizadores,Admin")]
+        [Authorize(Roles = "Cliente,GestorUtilizadores,Admin")]
         public async Task<IActionResult> Remover(int idProposta, int idSkill)
         {
             var propostaSkill = await _context.PropostaSkills

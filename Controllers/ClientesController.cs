@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace TalentosIT.Web.Controllers
 {
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,GestorUtilizadores")]
     public class ClientesController : Controller
     {
         private readonly ClientesService _service;

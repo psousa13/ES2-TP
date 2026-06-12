@@ -31,8 +31,8 @@ public class ContaController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Register(RegisterViewModel model)
     {
-        // If registering as client, validate address fields
-        if (model.TipoUtilizador == "gestor_utilizadores")
+        // If registering as cliente, validate address fields
+        if (model.TipoUtilizador == "cliente")
         {
             if (string.IsNullOrWhiteSpace(model.Rua))
                 ModelState.AddModelError("Rua", "A rua é obrigatória para clientes.");
@@ -52,8 +52,8 @@ public class ContaController : Controller
             return View(model);
         }
 
-        var tipo = model.TipoUtilizador == "gestor_utilizadores"
-            ? TipoUtilizador.GestorUtilizadores
+        var tipo = model.TipoUtilizador == "cliente"
+            ? TipoUtilizador.Cliente
             : TipoUtilizador.Utilizador;
 
         var hasher = new PasswordHasher<Utilizador>();
@@ -69,8 +69,8 @@ public class ContaController : Controller
 
         await _contaService.RegistarUtilizadorAsync(utilizador);
 
-        // Auto-create Cliente record for GestorUtilizadores with full address
-        if (tipo == TipoUtilizador.GestorUtilizadores)
+        // Auto-create Cliente record for Cliente accounts
+        if (tipo == TipoUtilizador.Cliente)
         {
             var cliente = new Cliente
             {
@@ -86,7 +86,8 @@ public class ContaController : Controller
             };
             await _contaService.CriarClienteAsync(cliente);
         }
-        var tipoLabel = tipo == TipoUtilizador.GestorUtilizadores ? "Cliente" : "Profissional";
+
+        var tipoLabel = tipo == TipoUtilizador.Cliente ? "Cliente" : "Profissional";
         await _registoService.RegistarAsync(utilizador.IdUtilizador, $"Conta criada. Tipo: {tipoLabel}.");
         return RedirectToAction("Login", "Conta");
     }
@@ -110,6 +111,12 @@ public class ContaController : Controller
         if (utilizador == null)
         {
             ModelState.AddModelError("", "Email inválido.");
+            return View(model);
+        }
+
+        if (!utilizador.Ativo)
+        {
+            ModelState.AddModelError("", "Esta conta está desativada.");
             return View(model);
         }
 

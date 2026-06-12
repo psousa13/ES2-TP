@@ -4,7 +4,7 @@
     var badge = Model.TipoUtilizador switch {
         TalentosIT.Web.Models.TipoUtilizador.Admin => ("Admin", "bg-danger"),
         TalentosIT.Web.Models.TipoUtilizador.GestorUtilizadores => ("Gestor de Utilizadores", "bg-primary"),
-        TalentosIT.Web.Models.TipoUtilizador.Cliente => ("Cliente", "bg-primary"),
+        TalentosIT.Web.Models.TipoUtilizador.Cliente => ("Cliente", "bg-warning"),
         _ => ("Profissional", "bg-success")
     };
 }

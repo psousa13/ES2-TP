@@ -172,5 +172,13 @@ namespace TalentosIT.Web.Services
         {
             return _context.PropostaTrabalhos.AnyAsync(e => e.IdProposta == id);
         }
+
+        public Task<PropostaTrabalho?> GetPropostaByTituloEUtilizador(string titulo, int idUtilizador)
+        {
+            return _context.PropostaTrabalhos
+                .Where(p => p.Titulo == titulo && p.IdUtilizador == idUtilizador)
+                .OrderByDescending(p => p.IdProposta)
+                .FirstOrDefaultAsync();
+        }
     }
 }

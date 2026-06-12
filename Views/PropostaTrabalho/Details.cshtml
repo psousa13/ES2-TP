@@ -72,11 +72,17 @@ else
 }
 
 <div class="mt-4">
-    @if (User.IsInRole("GestorUtilizadores") || User.IsInRole("Admin"))
+    @{
+        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        var isOwner = userId == Model.IdUtilizador.ToString();
+        var canManage = User.IsInRole("Admin") || User.IsInRole("GestorUtilizadores") ||
+                        (User.IsInRole("Cliente") && isOwner);
+    }
+    @if (canManage)
     {
         <a asp-action="Edit" asp-route-id="@Model.IdProposta" class="btn btn-warning">Editar</a>
         <a asp-controller="PropostaSkills" asp-action="Gerir" asp-route-id="@Model.IdProposta" class="btn btn-primary ms-2">Gerir Skills Exigidas</a>
-        <a asp-action="Elegiveis" asp-route-id="@Model?.IdProposta" class="btn btn-warning ms-2">Ver Talentos Elegíveis</a>
+        <a asp-action="Elegiveis" asp-route-id="@Model.IdProposta" class="btn btn-success ms-2">Ver Talentos Elegíveis</a>
     }
     <a asp-action="Index" class="btn btn-secondary ms-2">← Voltar à Lista</a>
 </div>

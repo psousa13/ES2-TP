@@ -13,11 +13,15 @@ namespace TalentosIT.Web.Controllers
     {
         private readonly TalentosService _service;
         private readonly RegistoAtividadeService _registoService;
+        private readonly TalentosItContext _context;
+        private readonly TalentosIT.Web.Services.Matching.MatchingEngine _matchingEngine;
 
-        public TalentosController(TalentosService service, RegistoAtividadeService registoService)
+        public TalentosController(TalentosService service, RegistoAtividadeService registoService, TalentosItContext context, TalentosIT.Web.Services.Matching.MatchingEngine matchingEngine)
         {
             _service = service;
             _registoService = registoService;
+            _context = context;
+            _matchingEngine = matchingEngine;
         }
 
         // GET: Talentos
@@ -181,17 +185,47 @@ namespace TalentosIT.Web.Controllers
         }
 
         // GET: Talentos/Buscar
-        public async Task<IActionResult> Buscar(HashSet<int>? idSkills)
+        [Authorize(Roles = "Cliente,GestorUtilizadores,Admin")]
+        public async Task<IActionResult> Buscar(int? propostaId)
         {
-            ViewBag.Skills = new SelectList(await _service.GetSkills(), "IdSkill", "Nome");
+            var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+            var isAdmin = User.IsInRole("Admin");
 
-            if (idSkills == null || idSkills.Count == 0)
+            var propostas = await _context.PropostaTrabalhos
+                .Where(p => isAdmin || p.IdUtilizador == userId)
+                .OrderBy(p => p.Titulo)
+                .ToListAsync();
+
+            ViewBag.Propostas = new SelectList(propostas, "IdProposta", "Titulo", propostaId);
+
+            if (propostaId == null)
+                return View(new List<Talento>());
+
+            var proposta = await _context.PropostaTrabalhos
+                .Include(p => p.PropostaSkills).ThenInclude(ps => ps.IdSkillNavigation)
+                .Include(p => p.IdClienteNavigation)
+                .FirstOrDefaultAsync(p => p.IdProposta == propostaId);
+
+            if (proposta == null) return NotFound();
+            if (!isAdmin && proposta.IdUtilizador != userId) return Forbid();
+
+            if (proposta.PropostaSkills == null || !proposta.PropostaSkills.Any())
             {
-                TempData["Aviso"] = "Por favor seleciona uma Skill.";
+                TempData["Aviso"] = "Esta proposta não tem skills definidas. Adicione skills à proposta antes de buscar talentos.";
                 return View(new List<Talento>());
             }
 
-            var results = await _service.Buscar(idSkills);
+            var todosTalentos = await _context.Talentos
+                .Where(t => t.Publico)
+                .Include(t => t.TalentoSkills).ThenInclude(ts => ts.IdSkillNavigation)
+                .Include(t => t.IdUtilizadorNavigation)
+                .ToListAsync();
+
+            var results = todosTalentos
+                .Where(t => _matchingEngine.IsMatch(t, proposta))
+                .OrderBy(t => t.PrecoHora * (proposta.HorasTotais ?? 0))
+                .ThenBy(t => t.PrimeiroNome)
+                .ToList();
 
             return View(results);
         }

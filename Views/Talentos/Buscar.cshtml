@@ -1,34 +1,39 @@
 @model IEnumerable<Talento>
 
 @{
-    ViewData["Title"] = "Buscar Talentos";
-    var skills = ViewBag.Skills as SelectList;
-    var selectedSkills = Context.Request.Query["idSkills"];
+    ViewData["Title"] = "Buscar Perfis de Talento";
+    var propostas = ViewBag.Propostas as SelectList;
+    var selectedPropostaId = Context.Request.Query["propostaId"].ToString();
 }
 
-<h1>Buscar Talentos</h1>
+<h1>Buscar Perfis de Talento</h1>
 
 @if (TempData["Aviso"] != null)
 {
     <div class="alert alert-warning">@TempData["Aviso"]</div>
 }
 
-<form asp-controller="Talentos" asp-action="Buscar" method="get" class="row g-3 align-items-end w-75">
-    @Html.AntiForgeryToken()
-    <div class="col-md-5">
-        <select name="idSkills" class="form-select" multiple>
-            @if (skills != null)
+<form asp-controller="Talentos" asp-action="Buscar" method="get" class="row g-3 align-items-end w-75 mb-4">
+    <div class="col-md-8">
+        <label class="form-label fw-semibold">Selecionar Proposta</label>
+        <select name="propostaId" class="form-select">
+            <option value="">-- Escolha uma proposta --</option>
+            @if (propostas != null)
             {
-                foreach (var item in skills)
+                foreach (var item in propostas)
                 {
-                    <option value="@item.Value" selected="@(selectedSkills.Contains(item.Value) ? "selected" : null)">
-                        @item.Text
-                    </option>
+                    if (item.Value == selectedPropostaId)
+                    {
+                        <option value="@item.Value" selected>@item.Text</option>
+                    }
+                    else
+                    {
+                        <option value="@item.Value">@item.Text</option>
+                    }
                 }
             }
         </select>
     </div>
-
     <div class="col-md-2">
         <button type="submit" class="btn btn-success w-100">Buscar</button>
     </div>
@@ -38,8 +43,10 @@
 
 @if (!Model.Any())
 {
-    <p>Nenhum talento encontrado.</p>
-} else {
+    <p class="text-muted">Nenhum talento encontrado.</p>
+}
+else
+{
     <table class="table table-striped">
         <thead>
             <tr>
@@ -58,7 +65,7 @@
                     <td>@item.IdUtilizadorNavigation?.Email</td>
                     <td>@(item.Categoria ?? "-")</td>
                     <td>@(item.PrecoHora.HasValue ? item.PrecoHora.Value.ToString("F2") + " €/h" : "-")</td>
-                    <td style="white-space: nowrap;">
+                    <td>
                         <a asp-action="Details" asp-route-id="@item.IdTalento" class="btn btn-sm btn-info">Detalhes</a>
                     </td>
                 </tr>

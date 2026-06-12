@@ -118,8 +118,18 @@ namespace TalentosIT.Web.Services
 
         public async Task Eliminar(int id)
         {
-            var talento = await _context.Talentos.FindAsync(id);
-            if (talento != null) _context.Talentos.Remove(talento);
+            var talento = await _context.Talentos
+                .Include(t => t.TalentoSkills)
+                .Include(t => t.Experiencia)
+                .FirstOrDefaultAsync(t => t.IdTalento == id);
+
+            if (talento != null)
+            {
+                _context.TalentoSkills.RemoveRange(talento.TalentoSkills);
+                _context.Experiencias.RemoveRange(talento.Experiencia);
+                _context.Talentos.Remove(talento);
+            }
+
             await _context.SaveChangesAsync();
         }
 

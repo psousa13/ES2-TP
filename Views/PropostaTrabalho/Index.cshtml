@@ -1,15 +1,18 @@
 @model IEnumerable<TalentosIT.Web.Models.PropostaTrabalho>
 @{
     ViewData["Title"] = "Propostas de Trabalho";
+    var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1>Propostas de Trabalho</h1>
-    @if (User.IsInRole("GestorUtilizadores") || User.IsInRole("Admin"))
-    {
-        <a asp-action="Create" class="btn btn-primary">+ Nova Proposta</a>
-    }
-    <a asp-controller="Talentos"  asp-action="Buscar" class="btn btn-primary">Buscar Perfis de Talento</a>
+    <div class="d-flex gap-2">
+        @if (User.IsInRole("Cliente") || User.IsInRole("GestorUtilizadores") || User.IsInRole("Admin"))
+        {
+            <a asp-action="Create" class="btn btn-primary">+ Nova Proposta</a>
+            <a asp-controller="Talentos" asp-action="Buscar" class="btn btn-outline-primary">Buscar Perfis de Talento</a>
+        }
+    </div>
 </div>
 
 <table class="table table-striped">
@@ -34,7 +37,8 @@
             <td class="text-muted small">@(item.Descricao?.Length > 60 ? item.Descricao[..60] + "…" : item.Descricao)</td>
             <td style="white-space:nowrap;">
                 <a asp-action="Details" asp-route-id="@item.IdProposta" class="btn btn-sm btn-info">Detalhes</a>
-                @if (User.IsInRole("GestorUtilizadores") || User.IsInRole("Admin"))
+                @if (User.IsInRole("Admin") || 
+                     ((User.IsInRole("GestorUtilizadores") || User.IsInRole("Cliente")) && item.IdUtilizador == userId))
                 {
                     <a asp-action="Edit" asp-route-id="@item.IdProposta" class="btn btn-sm btn-warning ms-1">Editar</a>
                     <a asp-action="Delete" asp-route-id="@item.IdProposta" class="btn btn-sm btn-danger ms-1">Eliminar</a>
