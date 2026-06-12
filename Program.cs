@@ -11,6 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
 dataSourceBuilder.MapEnum<TipoUtilizador>("tipo_utilizador");
+dataSourceBuilder.MapEnum<EstadoProposta>("estado_proposta");
 var dataSource = dataSourceBuilder.Build();
 
 builder.Services.AddDbContext<TalentosIT.Web.Models.TalentosItContext>(options => options.UseNpgsql(dataSource));
@@ -29,6 +30,7 @@ builder.Services.AddScoped<RegistoAtividadeService>();
 builder.Services.AddScoped<RelatorioPrecoService>();
 builder.Services.AddScoped<TalentoSkillsService>();
 builder.Services.AddScoped<TalentoExperienciasService>();
+builder.Services.AddScoped<PropostaTalentoService>();
 
 builder.Services.AddScoped<IMatchingRule, ProposalHasSkillsMatchingRule>();
 builder.Services.AddScoped<IMatchingRule, SkillMatchingRule>();

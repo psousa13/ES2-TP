@@ -30,4 +30,6 @@ public partial class Talento
     public virtual Utilizador IdUtilizadorNavigation { get; set; } = null!;
 
     public virtual ICollection<TalentoSkill> TalentoSkills { get; set; } = new List<TalentoSkill>();
+
+    public virtual ICollection<PropostaTalento> PropostaTalentos { get; set; } = new List<PropostaTalento>();
 }

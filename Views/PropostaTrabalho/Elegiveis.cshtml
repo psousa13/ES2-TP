@@ -29,48 +29,62 @@
     <div class="alert alert-info">
         Nenhum talento elegível encontrado para esta proposta.
     </div>
+    
+    <div class="mt-4">
+        <a asp-controller="PropostaTrabalho" asp-action="Details" asp-route-id="@proposta.IdProposta" class="btn btn-secondary">← Voltar à Proposta</a>
+    </div>
 }
 else
 {
     <p class="text-success fw-bold">@Model.Count() talento(s) elegível(eis) encontrado(s), ordenados por custo total estimado.</p>
 
-    <table class="table table-bordered">
-        <thead class="table-light">
-            <tr>
-                <th>Nome</th>
-                <th>Email</th>
-                <th>Categoria</th>
-                <th>País</th>
-                <th>Preço/Hora</th>
-                <th>Custo Total Estimado</th>
-                <th>Skills</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var talento in Model)
-            {
-                var custoTotal = talento.PrecoHora * (proposta.HorasTotais ?? 0);
-                <tr>
-                    <td>@talento.PrimeiroNome @talento.Apelido</td>
-                    <td>@talento.Email</td>
-                    <td>@talento.Categoria</td>
-                    <td>@talento.Pais</td>
-                    <td>@talento.PrecoHora?.ToString("F2") €/h</td>
-                    <td class="fw-bold">@custoTotal?.ToString("F2") €</td>
-                    <td>
-                        @foreach (var ts in talento.TalentoSkills.OrderBy(ts => ts.IdSkillNavigation?.Nome))
-                        {
-                            <span class="badge bg-secondary me-1">
-                                @ts.IdSkillNavigation?.Nome (@ts.AnosExperiencia anos)
-                            </span>
-                        }
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
+    <form asp-controller="PropostaTalento" asp-action="Convidar" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="idProposta" value="@proposta.IdProposta" />
 
-<div class="mt-4">
-    <a asp-action="Details" asp-route-id="@proposta.IdProposta" class="btn btn-secondary">← Voltar à Proposta</a>
-</div>
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 40px;" class="text-center">Selecionar</th>
+                        <th>Nome</th>
+                        <th>Email</th>
+                        <th>Categoria</th>
+                        <th>Preço/Hora</th>
+                        <th>Custo Total Estimado</th>
+                        <th>Skills</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var talento in Model)
+                    {
+                        var custoTotal = talento.PrecoHora * (proposta.HorasTotais ?? 0);
+                        <tr>
+                            <td class="text-center">
+                                <input type="checkbox" name="idsTalentos" value="@talento.IdTalento" class="form-check-input" />
+                            </td>
+                            <td>@talento.PrimeiroNome @talento.Apelido</td>
+                            <td>@talento.Email</td>
+                            <td>@talento.Categoria</td>
+                            <td>@talento.PrecoHora?.ToString("F2") €/h</td>
+                            <td class="fw-bold">@custoTotal?.ToString("F2") €</td>
+                            <td>
+                                @foreach (var ts in talento.TalentoSkills.OrderBy(ts => ts.IdSkillNavigation?.Nome))
+                                {
+                                    <span class="badge bg-secondary me-1">
+                                        @ts.IdSkillNavigation?.Nome (@ts.AnosExperiencia anos)
+                                    </span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-4 d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Convidar Talentos Selecionados</button>
+            <a asp-controller="PropostaTrabalho" asp-action="Details" asp-route-id="@proposta.IdProposta" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+    </form>
+}

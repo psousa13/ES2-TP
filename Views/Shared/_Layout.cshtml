@@ -31,12 +31,11 @@
 
                         @if (User?.Identity?.IsAuthenticated == true)
                         {
-                            @* Skills: visible to all, but Create/Edit/Delete restricted server-side *@
+                            @* Links Públicos/Comuns para Autenticados *@
                             <li class="nav-item">
                                 <a class="nav-link" asp-controller="Skills" asp-action="Index">Skills</a>
                             </li>
 
-                            @* Talentos: profissional e admin veem, gestor também *@
                             @if (User.IsInRole("Utilizador") || User.IsInRole("Admin") || User.IsInRole("GestorUtilizadores"))
                             {
                                 <li class="nav-item">
@@ -44,51 +43,47 @@
                                 </li>
                             }
 
-                            @* Propostas: todos veem *@
                             <li class="nav-item">
                                 <a class="nav-link" asp-controller="PropostaTrabalho" asp-action="Index">Propostas</a>
                             </li>
 
-                            @* Clientes: admin e gestor apenas *@
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="PropostaTalento" asp-action="Index">Solicitações</a>
+                            </li>
+
+                            @* Gestão *@
                             @if (User.IsInRole("Admin") || User.IsInRole("GestorUtilizadores"))
                             {
-                                <li class="nav-item">
-                                    <a class="nav-link" asp-controller="Clientes" asp-action="Index">Clientes</a>
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle text-primary fw-bold" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Gestão
+                                    </a>
+                                    <ul class="dropdown-menu" aria-labelledby="adminDropdown">
+                                        <li><a class="dropdown-item" asp-controller="Clientes" asp-action="Index">Clientes</a></li>
+                                        <li><a class="dropdown-item" asp-controller="Utilizadores" asp-action="Index">Utilizadores</a></li>
+                                    </ul>
                                 </li>
                             }
 
-                            @* Skills: admin e gestor podem criar/apagar *@
-                            @if (User.IsInRole("Admin") || User.IsInRole("GestorUtilizadores"))
-                            {
-                                <li class="nav-item">
-                                    <a class="nav-link" asp-controller="Skills" asp-action="Index">Skills</a>
-                                </li>
-                            }
-
-                            @* Utilizadores: admin e gestor *@
-                            @if (User.IsInRole("Admin") || User.IsInRole("GestorUtilizadores"))
-                            {
-                                <li class="nav-item">
-                                    <a class="nav-link" asp-controller="Utilizadores" asp-action="Index">Utilizadores</a>
-                                </li>
-                            }
-
-                            @* Todos os registos: admin only *@
+                            @* Relatórios (admin) *@
                             @if (User.IsInRole("Admin"))
                             {
-                                <li class="nav-item">
-                                    <a class="nav-link" asp-controller="RegistoAtividade" asp-action="Index">Todos os Registos</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" asp-controller="RelatorioPreco" asp-action="Index">Relatórios</a>
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle text-primary fw-bold" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Registos
+                                    </a>
+                                    <ul class="dropdown-menu" aria-labelledby="adminDropdown">
+                                        <li><a class="dropdown-item" asp-controller="RegistoAtividade" asp-action="Index">Todos os Registos</a></li>
+                                        <li><a class="dropdown-item" asp-controller="RegistoAtividade" asp-action="PorUtilizador">Registos por Utilizador</a></li>
+                                        <li><a class="dropdown-item" asp-controller="RelatorioPreco" asp-action="Index">Relatórios de Preços</a></li>
+                                    </ul>
                                 </li>
                             }
 
-                            @* Registos por utilizador: admin e gestor *@
-                            @if (User.IsInRole("Admin") || User.IsInRole("GestorUtilizadores"))
+                            @if (User.IsInRole("GestorUtilizadores"))
                             {
                                 <li class="nav-item">
-                                    <a class="nav-link" asp-controller="RegistoAtividade" asp-action="PorUtilizador">Registos por Utilizador</a>
+                                    <a class="nav-link" asp-controller="RegistoAtividade" asp-action="PorUtilizador">Registos</a>
                                 </li>
                             }
                         }

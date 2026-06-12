@@ -25,9 +25,12 @@ public partial class PropostaTrabalho
 
     [Display(Name = "Descrição")] public string? Descricao { get; set; }
 
+    [Display(Name = "Vagas")] public int Vagas { get; set; }
+
     // As propriedades "virtual" são as relações que o EF usa
     public virtual Cliente IdClienteNavigation { get; set; } = null!;
     public virtual Utilizador IdUtilizadorNavigation { get; set; } = null!;
     public virtual ICollection<PropostaSkill> PropostaSkills { get; set; } = new List<PropostaSkill>();
+    public virtual ICollection<PropostaTalento> PropostaTalentos { get; set; } = new List<PropostaTalento>();
 }
 

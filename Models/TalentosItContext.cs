@@ -49,6 +49,7 @@ public partial class TalentosItContext : DbContext
     {
         // Register the postgres enum type
         modelBuilder.HasPostgresEnum<TipoUtilizador>("tipo_utilizador");
+        modelBuilder.HasPostgresEnum<EstadoProposta>("estado_proposta");
 
         modelBuilder.Entity<Cliente>(entity =>
         {
@@ -161,6 +162,9 @@ public partial class TalentosItContext : DbContext
             entity.Property(e => e.Titulo)
                 .HasMaxLength(200)
                 .HasColumnName("titulo");
+            entity.Property(p => p.Vagas)
+                .HasColumnName("vagas")
+                .HasDefaultValue(1);
 
             entity.HasOne(d => d.IdClienteNavigation).WithMany(p => p.PropostaTrabalhos)
                 .HasForeignKey(d => d.IdCliente)
@@ -358,6 +362,33 @@ public partial class TalentosItContext : DbContext
             entity.Property(e => e.Telefone)
                 .HasMaxLength(15)
                 .HasColumnName("telefone");
+        });
+
+        modelBuilder.Entity<PropostaTalento>(entity =>
+        {
+            entity.ToTable("proposta_talento");
+
+            entity.Property(e => e.IdProposta).HasColumnName("id_proposta");
+
+            entity.Property(e => e.IdTalento).HasColumnName("id_talento");
+
+            entity.HasKey(e => new { e.IdProposta, e.IdTalento });
+
+            entity.Property(e => e.Estado)
+                .HasColumnName("estado")
+                .HasDefaultValue(EstadoProposta.Pendente);
+
+            entity.Property(e => e.DataResposta).HasColumnName("data_resposta");
+
+            entity.HasOne(d => d.IdPropostaNavigation)
+                .WithMany(p => p.PropostaTalentos)
+                .HasForeignKey(d => d.IdProposta)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(d => d.IdTalentoNavigation)
+                .WithMany(p => p.PropostaTalentos)
+                .HasForeignKey(d => d.IdTalento)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         OnModelCreatingPartial(modelBuilder);
