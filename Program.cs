@@ -56,4 +56,26 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<TalentosItContext>();
+    
+    if (!context.Utilizadors.Any())
+    {
+        var hasher = new PasswordHasher<Utilizador>();
+        var admin = new Utilizador
+        {
+            PrimeiroNome = "Admin",
+            Apelido = "Sistema",
+            Email = "admin@talentosit.com",
+            TipoUtilizador = TipoUtilizador.Admin,
+            Ativo = true,
+            Telefone = null
+        };
+        admin.PalavraPasse = hasher.HashPassword(admin, "Admin123!");
+        context.Utilizadors.Add(admin);
+        context.SaveChanges();
+    }
+}
+
 app.Run();
