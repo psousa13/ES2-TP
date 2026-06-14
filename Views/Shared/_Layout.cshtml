@@ -36,6 +36,14 @@
                                 <a class="nav-link" asp-controller="Skills" asp-action="Index">Skills</a>
                             </li>
 
+                            @* Ofertas de Emprego: apenas profissional *@
+                            @if (User.IsInRole("Utilizador"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="OfertasEmprego" asp-action="MinhasOfertas">Ofertas de Emprego</a>
+                                </li>
+                            }
+
                             @* Talentos: profissional e admin veem, gestor também *@
                             @if (User.IsInRole("Utilizador") || User.IsInRole("Admin") || User.IsInRole("GestorUtilizadores"))
                             {
@@ -48,6 +56,14 @@
                             <li class="nav-item">
                                 <a class="nav-link" asp-controller="PropostaTrabalho" asp-action="Index">Propostas</a>
                             </li>
+
+                            @* Ofertas Enviadas: apenas cliente *@
+                            @if (User.IsInRole("Cliente"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="OfertasEmprego" asp-action="OfertasEnviadas">Ofertas Enviadas</a>
+                                </li>
+                            }
 
                             @* Clientes: admin e gestor apenas *@
                             @if (User.IsInRole("Admin") || User.IsInRole("GestorUtilizadores"))

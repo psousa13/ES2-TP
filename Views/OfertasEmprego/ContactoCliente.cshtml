@@ -1,0 +1,30 @@
+@model TalentosIT.Web.Models.OfertaEmprego
+
+@{
+    ViewData["Title"] = "Contacto do Cliente";
+    var cliente = Model.IdPropostaNavigation.IdClienteNavigation;
+}
+
+<h1>Contacto do Cliente</h1>
+<p class="text-muted">Oferta aceite para a proposta <strong>@Model.IdPropostaNavigation.Titulo</strong></p>
+
+<div class="card shadow-sm mt-3" style="max-width: 500px;">
+    <div class="card-header bg-success text-white">
+        <strong>@cliente?.PrimeiroNome @cliente?.Apelido</strong>
+    </div>
+    <div class="card-body">
+        <p><strong>Email:</strong> <a href="mailto:@cliente?.Email">@cliente?.Email</a></p>
+        @if (!string.IsNullOrEmpty(cliente?.Telefone))
+        {
+            <p><strong>Telefone:</strong> @cliente.Telefone</p>
+        }
+        @if (!string.IsNullOrEmpty(cliente?.Rua))
+        {
+            <p><strong>Morada:</strong> @cliente.Rua @cliente.NumPorta, @cliente.Cidade, @cliente.Pais</p>
+        }
+    </div>
+</div>
+
+<div class="mt-4">
+    <a asp-action="MinhasOfertas" class="btn btn-secondary">← Voltar às Minhas Ofertas</a>
+</div>

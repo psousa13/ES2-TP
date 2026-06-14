@@ -1,0 +1,68 @@
+@model IEnumerable<TalentosIT.Web.Models.OfertaEmprego>
+@using TalentosIT.Web.Models
+
+@{
+    ViewData["Title"] = "Ofertas de Emprego Enviadas";
+}
+
+<h1>Ofertas Enviadas</h1>
+
+@if (TempData["Sucesso"] != null)
+{
+    <div class="alert alert-success">@TempData["Sucesso"]</div>
+}
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">Ainda não enviou nenhuma oferta de emprego.</div>
+}
+else
+{
+    <table class="table table-bordered">
+        <thead class="table-light">
+            <tr>
+                <th>Profissional</th>
+                <th>Proposta</th>
+                <th>Enviada</th>
+                <th>Respondida</th>
+                <th>Estado</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var o in Model)
+            {
+                <tr>
+                    <td>@o.IdTalentoNavigation.PrimeiroNome @o.IdTalentoNavigation.Apelido</td>
+                    <td>@o.IdPropostaNavigation.Titulo</td>
+                    <td>@o.DataEnvio.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>@(o.DataResposta?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "—")</td>
+                    <td>
+                        @if (o.Estado == EstadoOferta.Pendente)
+                        {
+                            <span class="badge bg-warning text-dark">Pendente</span>
+                        }
+                        else if (o.Estado == EstadoOferta.Aceite)
+                        {
+                            <span class="badge bg-success">Aceite</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger">Recusada</span>
+                        }
+                    </td>
+                    <td>
+                        @if (o.Estado == EstadoOferta.Aceite)
+                        {
+                            <a asp-action="ContactoProfissional" asp-route-id="@o.IdOferta" class="btn btn-sm btn-outline-primary">Ver Contacto do Profissional</a>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<div class="mt-4">
+    <a asp-controller="Home" asp-action="Index" class="btn btn-secondary">← Voltar ao Dashboard</a>
+</div>

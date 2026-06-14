@@ -1,0 +1,30 @@
+@model TalentosIT.Web.Models.OfertaEmprego
+
+@{
+    ViewData["Title"] = "Contacto do Profissional";
+    var talento = Model.IdTalentoNavigation;
+    var utilizador = talento.IdUtilizadorNavigation;
+}
+
+<h1>Contacto do Profissional</h1>
+<p class="text-muted">Oferta aceite para a proposta <strong>@Model.IdPropostaNavigation.Titulo</strong></p>
+
+<div class="card shadow-sm mt-3" style="max-width: 500px;">
+    <div class="card-header bg-success text-white">
+        <strong>@talento.PrimeiroNome @talento.Apelido</strong>
+    </div>
+    <div class="card-body">
+        <p><strong>Email:</strong> <a href="mailto:@utilizador.Email">@utilizador.Email</a></p>
+        @if (!string.IsNullOrEmpty(utilizador.Telefone))
+        {
+            <p><strong>Telefone:</strong> @utilizador.Telefone</p>
+        }
+        <p><strong>Categoria:</strong> @(talento.Categoria ?? "—")</p>
+        <p><strong>País:</strong> @talento.Pais</p>
+        <p><strong>Preço/Hora:</strong> @(talento.PrecoHora.HasValue ? talento.PrecoHora.Value.ToString("F2") + " €/h" : "—")</p>
+    </div>
+</div>
+
+<div class="mt-4">
+    <a asp-action="OfertasEnviadas" class="btn btn-secondary">← Voltar às Ofertas Enviadas</a>
+</div>

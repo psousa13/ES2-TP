@@ -37,6 +37,8 @@ public partial class TalentosItContext : DbContext
 
     public virtual DbSet<UtilizadoresAtivo> UtilizadoresAtivos { get; set; }
 
+    public virtual DbSet<OfertaEmprego> OfertasEmprego { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         if (!optionsBuilder.IsConfigured)
@@ -358,6 +360,45 @@ public partial class TalentosItContext : DbContext
             entity.Property(e => e.Telefone)
                 .HasMaxLength(15)
                 .HasColumnName("telefone");
+        });
+
+        modelBuilder.Entity<OfertaEmprego>(entity =>
+        {
+            entity.HasKey(e => e.IdOferta).HasName("oferta_emprego_pkey");
+
+            entity.ToTable("oferta_emprego");
+
+            entity.Property(e => e.IdOferta).HasColumnName("id_oferta");
+            entity.Property(e => e.IdProposta).HasColumnName("id_proposta");
+            entity.Property(e => e.IdTalento).HasColumnName("id_talento");
+            entity.Property(e => e.IdClienteUtilizador).HasColumnName("id_cliente_utilizador");
+            entity.Property(e => e.Estado)
+                .HasColumnName("estado")
+                .HasConversion<string>()
+                .HasMaxLength(20)
+                .HasDefaultValue(EstadoOferta.Pendente);
+            entity.Property(e => e.DataEnvio)
+                .HasColumnName("data_envio")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone");
+            entity.Property(e => e.DataResposta)
+                .HasColumnName("data_resposta")
+                .HasColumnType("timestamp without time zone");
+
+            entity.HasOne(d => d.IdPropostaNavigation).WithMany()
+                .HasForeignKey(d => d.IdProposta)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("oferta_emprego_id_proposta_fkey");
+
+            entity.HasOne(d => d.IdTalentoNavigation).WithMany()
+                .HasForeignKey(d => d.IdTalento)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("oferta_emprego_id_talento_fkey");
+
+            entity.HasOne(d => d.IdClienteUtilizadorNavigation).WithMany()
+                .HasForeignKey(d => d.IdClienteUtilizador)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("oferta_emprego_id_cliente_utilizador_fkey");
         });
 
         OnModelCreatingPartial(modelBuilder);

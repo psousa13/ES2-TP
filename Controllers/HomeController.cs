@@ -61,9 +61,13 @@ namespace TalentosIT.Web.Controllers
                         .Where(proposta => _matchingEngine.IsMatch(talento, proposta))
                         .ToList();
 
+                    var ofertasPendentes = await _context.OfertasEmprego
+                        .CountAsync(o => o.IdTalento == talento.IdTalento && o.Estado == Models.EstadoOferta.Pendente);
+
                     ViewData["MatchingPropostas"] = matchingPropostas;
                     ViewData["TalentoId"] = talento.IdTalento;
                     ViewData["HasTalento"] = true;
+                    ViewData["OfertasPendentes"] = ofertasPendentes;
                 }
                 else
                 {

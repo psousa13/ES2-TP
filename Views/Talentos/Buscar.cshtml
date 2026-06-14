@@ -13,6 +13,11 @@
     <div class="alert alert-warning">@TempData["Aviso"]</div>
 }
 
+@if (TempData["Sucesso"] != null)
+{
+    <div class="alert alert-success">@TempData["Sucesso"]</div>
+}
+
 <form asp-controller="Talentos" asp-action="Buscar" method="get" class="row g-3 align-items-end w-75 mb-4">
     <div class="col-md-8">
         <label class="form-label fw-semibold">Selecionar Proposta</label>
@@ -67,6 +72,15 @@ else
                     <td>@(item.PrecoHora.HasValue ? item.PrecoHora.Value.ToString("F2") + " €/h" : "-")</td>
                     <td>
                         <a asp-action="Details" asp-route-id="@item.IdTalento" class="btn btn-sm btn-info">Detalhes</a>
+                        @if (!string.IsNullOrEmpty(selectedPropostaId))
+                        {
+                            <form asp-controller="OfertasEmprego" asp-action="Enviar" method="post" class="d-inline ms-1">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="idProposta" value="@selectedPropostaId" />
+                                <input type="hidden" name="idTalento" value="@item.IdTalento" />
+                                <button type="submit" class="btn btn-sm btn-warning">Enviar Oferta</button>
+                            </form>
+                        }
                     </td>
                 </tr>
             }

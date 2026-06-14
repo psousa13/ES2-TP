@@ -4,6 +4,7 @@
     var matchingPropostas = ViewData["MatchingPropostas"] as List<PropostaTrabalho> ?? new();
     var hasTalento = (bool)(ViewData["HasTalento"] ?? false);
     var talentoId = ViewData["TalentoId"] as int?;
+    var ofertasPendentes = ViewData["OfertasPendentes"] as int? ?? 0;
 }
 
 <div class="hero fade-up" style="padding: 2rem 0 1.5rem;">
@@ -35,6 +36,12 @@
         <div class="stat-card">
             <div class="stat-value">@matchingPropostas.Count</div>
             <div class="stat-label">Correspondências</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-value">@ofertasPendentes</div>
+            <div class="stat-label">Ofertas Pendentes</div>
         </div>
     </div>
 </div>
@@ -105,5 +112,12 @@ else
             <a asp-controller="Talentos" asp-action="Create" class="btn btn-primary">Criar Perfil</a>
         }
         <a asp-controller="PropostaTrabalho" asp-action="Index" class="btn btn-outline-secondary">Ver todas as propostas</a>
+        <a asp-controller="OfertasEmprego" asp-action="MinhasOfertas" class="btn btn-outline-warning">
+            Ofertas de Emprego
+            @if (ofertasPendentes > 0)
+            {
+                <span class="badge bg-warning text-dark ms-1">@ofertasPendentes</span>
+            }
+        </a>
     </div>
 </div>
